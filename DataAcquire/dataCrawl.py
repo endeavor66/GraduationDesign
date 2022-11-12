@@ -38,7 +38,7 @@ data = gh.get('2020-05-06 11:00:00', '2020-05-06 11:00:00', filters=[
     ('repo.name', 'bitcoin/bitcoin')
 ])
 #
-# print(data)
+print(data)
 
 # if __name__ == '__main__':
 #     pass
