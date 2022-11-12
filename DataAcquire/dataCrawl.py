@@ -5,7 +5,7 @@ repo = 'tensorflow/tensorflow'
 
 # 查询数据
 gh = get_client()
-data = gh.get('2021-12-01', '2022-12-03', filters=[
+data = gh.get('2021-12-01 08:00:00', '2022-12-01 12:00:00', filters=[
     ('repo.name', repo)
 ])
 
@@ -37,7 +37,7 @@ for archive in data:
     )
     datas.append(t)
 
-insert_batch("events", datas, repo)
+insert_batch("events", datas, repo[repo.index('/')+1:])
 
 
 
