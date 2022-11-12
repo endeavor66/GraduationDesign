@@ -1,4 +1,7 @@
 import requests
+import gzip
+import json
+import pandas as pd
 
 url_prefix = 'https://data.gharchive.org/'
 
@@ -26,10 +29,61 @@ def crawDataBetweenTime(start_time, end_time):
 def crawlDataForProject(project, source, target):
     pass
 
-if __name__ == '__main__':
-    project = ''
-    start_time = ''
-    end_time = ''
 
-    crawDataBetweenTime()
-    crawlDataForProject()
+
+from gharchive import GHArchive
+gh = GHArchive()
+#
+data = gh.get('2020-05-06 11:00:00', '2020-05-06 11:00:00', filters=[
+    ('repo.name', 'bitcoin/bitcoin')
+])
+#
+# print(data)
+
+# if __name__ == '__main__':
+#     pass
+    # project = ''
+    # start_time = ''
+    # end_time = ''
+    #
+    # crawDataBetweenTime()
+    # crawlDataForProject()
+    # r = requests.get('https://data.gharchive.org/2015-01-01-15.json.gz', headers={'Connection':'close'}, stream=True, verify=False, timeout=(5,5))
+    # g = gzip.decompress(r.content)
+    # data_str = g.decode("utf8")
+    # data_strs = [s for s in data_str.split("\n") if s]
+    # json_str = "[" + ", ".join(data_strs) + "]"
+    # data = json.loads(json_str)
+
+    # print(data)
+
+
+
+
+# def _date_to_str(date: pd.Timestamp):
+#     mdy = date.strftime("%Y-%m-%d")
+#     if date.hour == 0:
+#         h = '0'
+#     else:
+#         h = date.strftime("%H").lstrip("0")
+#     return f'{mdy}-{h}'
+#
+# dates = pd.date_range(start='2020-05-06 11:00:00', end='2020-05-06 13:00:00', freq='h')
+# date_strs = [_date_to_str(date) for date in dates]
+# print(date_strs)
+
+import pymysql
+conn = pymysql.connect(host='127.0.0.1', port=3306, user='root', password='123456',
+                       db='poison', charset='utf8')
+cur = conn.cursor()
+# 第三步：执行sql语句
+sql = """insert into user(name, age) values(%s, %s)"""
+
+# 返回的是查询的数据条数
+res = cur.execute(sql, ('zhaoliu', 24))
+conn.commit()
+print(res)
+
+cur.close()
+conn.close()
+
