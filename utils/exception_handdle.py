@@ -2,13 +2,10 @@
 import os
 import time
 
-# 将异常写到文件中
-from utils.path_exist import path_exists_or_create
-
-
 def write_file(exception, filename):
     current_path = os.getcwd() + '\\exception_data\\'  # 获取当前路径
-    path_exists_or_create(current_path)
+    if not os.path.exists(current_path):
+        os.makedirs(current_path)
     # print(current_path)
     filepath = current_path + filename  # 在当前路径创建名为test的文本文件
     now_time = time.strftime('%Y-%m-%d %H:%M:%S ', time.localtime(time.time()))  # 获取当前时间
@@ -17,6 +14,3 @@ def write_file(exception, filename):
 
     with open(filepath, 'a+') as writer:
         writer.write(context)
-
-# 写入数据库时，去操作一下
-write_file("connect failed", "android.csv")

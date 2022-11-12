@@ -1,6 +1,6 @@
 import pymysql
-from access_key import get_mysql_root_psw
-from exception_handdle import write_file
+from utils.access_key import get_mysql_root_psw
+from utils.exception_handdle import write_file
 
 TABLE_FIELDS = {
     "events": [
@@ -43,7 +43,7 @@ cursor = conn.cursor()
 输出
     控制台打印过程信息，如：执行的SQL，SQL执行后的影响行数，SQL执行异常
 """
-def insert_one(table, data, project):
+def insert_one(table, data, repo):
     if table not in TABLE_FIELDS:
         print("不存在%s的字段信息" % table)
         return
@@ -61,7 +61,7 @@ def insert_one(table, data, project):
         conn.rollback()
         conn.close()
         print("数据库执行出错:" + str(e))
-        write_file(exception=str(e), filename=project + "_exception.csv")
+        write_file(exception=str(e), filename=repo + "_exception.csv")
 
 
 """
@@ -73,7 +73,7 @@ def insert_one(table, data, project):
 输出
     控制台打印过程信息，如：执行的SQL，SQL执行后的影响行数，SQL执行异常
 """
-def insert_batch(table, datas, project):
+def insert_batch(table, datas, repo):
     if table not in TABLE_FIELDS:
         print("不存在%s的字段信息" % table)
         return
@@ -91,7 +91,7 @@ def insert_batch(table, datas, project):
         conn.rollback()
         conn.close()
         print("数据库执行出错:" + str(e))
-        write_file(exception=str(e), filename=project + "_exception.csv")
+        write_file(exception=str(e), filename=repo + "_exception.csv")
 
 
 def select_one():
@@ -101,7 +101,7 @@ def select_one():
 def select_batch():
     pass
 
-dts = [("11111113", "MemberEvent", 1, "2022-11-12 10:00:59", 1111, "endeavor66", 11111, "endeavor66/DMS",
-                     "head/master", "branch", "pusher", 1111, 10, 10, "SHA1#SHA2#SHA3", "created", 111111,
-                     "admin->reviewer", 11111111, "lisi", "admin", 0)]
-insert_batch("events", dts, "test")
+# dts = [("11111113", "MemberEvent", 1, "2022-11-12 10:00:59", 1111, "endeavor66", 11111, "endeavor66/DMS",
+#                      "head/master", "branch", "pusher", 1111, 10, 10, "SHA1#SHA2#SHA3", "created", 111111,
+#                      "admin->reviewer", 11111111, "lisi", "admin", 0)]
+# insert_batch("events", dts, "test")
