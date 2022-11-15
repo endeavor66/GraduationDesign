@@ -8,7 +8,7 @@ repo = 'tensorflow/tensorflow'
 start = datetime.now()
 
 gh = get_client()
-archive = gh.get('2021-12-01 16:00:00', '2021-12-01 18:00:00', filters=[
+archive = gh.get('2021-12-01 00:00:00', '2021-12-01 00:00:00', filters=[
     ('repo.name', repo)
 ])
 
@@ -34,7 +34,7 @@ for archive_element in archive:
          archive_element.payload.distinct_size,
          join_commits_sha(archive_element.payload.commits),
          archive_element.payload.action,
-         archive_element.payload.number,
+         archive_element.payload.pr_number,
          archive_element.payload.changes,
          archive_element.member.id if archive_element.member is not None else None,
          archive_element.member.login if archive_element.member is not None else None,
