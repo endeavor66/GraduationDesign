@@ -8,12 +8,12 @@ repo = 'tensorflow/tensorflow'
 start = datetime.now()
 
 gh = get_client()
-archive = gh.get('2021-12-01 01:00:00', '2021-12-01 05:00:00', filters=[
+archive = gh.get('2021-11-01 00:00:00', '2021-11-01 00:00:00', filters=[
     ('repo.name', repo)
 ])
 
 end = datetime.now()
-print("一共查询到 %d 条数据, 耗时 %d s" % (len(archive.data), (end-start).seconds))
+print("一共查询到 %d 条数据, 耗时 %d s" % (len(archive.data), (end - start).seconds))
 
 # 保存到数据库
 datas = []
@@ -34,22 +34,16 @@ for archive_element in archive:
          archive_element.payload.distinct_size,
          join_commits_sha(archive_element.payload.commits),
          archive_element.payload.action,
-         archive_element.payload.pr_number,
+         archive_element.payload.pull_request.number if archive_element.payload.pull_request is not None else None,
          archive_element.payload.changes,
          archive_element.member.id if archive_element.member is not None else None,
          archive_element.member.login if archive_element.member is not None else None,
          archive_element.member.type if archive_element.member is not None else None,
          archive_element.member.site_admin if archive_element.member is not None else None
-    )
+         )
     datas.append(t)
 
 start = datetime.now()
-insert_batch("events", datas, repo[repo.index('/')+1:])
+insert_batch("events", datas, repo[repo.index('/') + 1:])
 end = datetime.now()
-print("插入数据库耗时 %d s" % (end-start).seconds)
-
-
-
-
-
-
+print("插入数据库耗时 %d s" % (end - start).seconds)
