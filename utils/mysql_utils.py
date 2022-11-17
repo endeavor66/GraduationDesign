@@ -21,6 +21,7 @@ TABLE_FIELDS = {
         "payload_commits",
         "payload_action",
         "payload_pr_number",
+        "payload_forkee_full_name",
         "payload_changes",
         "payload_member_id",
         "payload_member_login",
@@ -68,12 +69,22 @@ def insert_batch(table, datas, repo):
 """
 对table执行sql查询
 """
-def execute_query(sql):
+def select_all(sql):
     print("执行SQL: " + sql)
     conn.ping(reconnect=True)
     cursor = conn.cursor()
     cursor.execute(sql)
     data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return data
+
+def select_one(sql):
+    print("执行SQL: " + sql)
+    conn.ping(reconnect=True)
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    data = cursor.fetchone()
     cursor.close()
     conn.close()
     return data

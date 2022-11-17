@@ -8,7 +8,7 @@ repo = 'tensorflow/tensorflow'
 start = datetime.now()
 
 gh = get_client()
-archive = gh.get('2021-11-01 00:00:00', '2021-11-01 00:00:00', filters=[
+archive = gh.get('2021-12-01 01:00:00', '2021-12-01 01:00:00', filters=[
     ('repo.name', repo)
 ])
 
@@ -35,6 +35,7 @@ for archive_element in archive:
          join_commits_sha(archive_element.payload.commits),
          archive_element.payload.action,
          archive_element.payload.pull_request.number if archive_element.payload.pull_request is not None else None,
+         archive_element.payload.forkee.full_name if archive_element.payload.forkee is not None else None,
          archive_element.payload.changes,
          archive_element.member.id if archive_element.member is not None else None,
          archive_element.member.login if archive_element.member is not None else None,
