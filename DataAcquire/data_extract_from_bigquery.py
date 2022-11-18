@@ -5,7 +5,7 @@ from utils.mysql_utils import insert_batch
 repo = "tensorflow/tensorflow"
 filepath = "bigquery_data/20211223.csv"
 df = pd.read_csv(filepath)
-
+df = df.loc[df['repo_name'] == repo]
 
 '''
 功能：从commits中提取所有commit的SHA，拼接为字符串后返回(#连接)，格式：SHA1#SHA2#SHA3
