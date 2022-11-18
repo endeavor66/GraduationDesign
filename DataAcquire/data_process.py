@@ -9,6 +9,7 @@
 5、根据PR包含的 merged_by 获得合入信息(合入者, 合入时间)。合入结果可以通过merged_at是否为NULL 或 merged 字段来判断
 """
 
+import pandas as pd
 from typing import List
 from datetime import datetime
 from utils.mysql_utils import select_all, select_one
@@ -33,7 +34,7 @@ def get_pr_attributes(repo: str, pr_number: int) -> (datetime, datetime):
     搜索到的事件，如果没找到则返回None
 '''
 def get_fork_event(repo: str, created_at: datetime) -> List:
-    sql = f"select * from events where created_at <= '{created_at}' and type='ForkEvent' and payload_forkee_fullname='{repo}' order by created_at desc"
+    sql = f"select * from events where created_at <= '{created_at}' and type='ForkEvent' and payload_forkee_full_name='{repo}' order by created_at desc"
     data = select_one(sql)
     return data
 
@@ -78,10 +79,10 @@ def get_fork_or_create_event(head_repo_fork: bool, head_repo_full_name: str, hea
 
 
 '''
-功能：从events表中提取特定PR(pr_number)在特定时间段(created_at, closed_at)的相关事件
+功能：从events表中提取特定PR(pr_number)的相关事件
 '''
-def get_pr_events_between(pr_number: int, created_at: datetime, closed_at: datetime) -> List:
-    sql = f"select * from events where created_at >= '{created_at}' and created_at <= '{closed_at}'"
+def get_pr_events(pr_number: int) -> List:
+    sql = f"select * from events where payload_pr_number={pr_number} and (type='PullRequestEvent' OR type='PullRequestReviewEvent' OR type='PullRequestReviewCommentEvent')"
     data = select_all(sql)
     return data
 
@@ -93,21 +94,28 @@ def search_pr_events(repo: str, pr_number: int) -> List:
         print(f"PR#{pr_number},数据库中没有查询到PR信息")
         return
     # 2.确定PR的(开始, 结束)时间
-    created_at, closed_at = pr_attributes['created_at'], pr_attributes['closed_at']
-    if created_at is None or closed_at is None:
-        print(f"PR#{pr_number} 开始/结束时间不完整")
+    created_at = pr_attributes['created_at']
+    if created_at is None:
+        print(f"PR#{pr_number} 开始时间为None")
         return
     # 存储一次完整PR涉及的事件集合
     pr_events = []
-    # 3.从events表中提取forkEvent或createEvent
+    # 2.从events表中提取forkEvent或createEvent
     event = get_fork_or_create_event(pr_attributes['head_repo_fork'], pr_attributes['head_repo_full_name'], pr_attributes['head_ref'], created_at)
     if event is not None:
         pr_events.append(event)
-    # 4.从events表中提取PR相关事件: PullRequestEvent、PullRequestReviewEvent、PullRequestReviewCommentEvent、IssueCommentEvent
-    events = get_pr_events_between(pr_number, created_at, closed_at)
+    # 3.从events表中提取PR相关事件: PullRequestEvent、PullRequestReviewEvent、PullRequestReviewCommentEvent、IssueCommentEvent
+    events = get_pr_events(pr_number)
     pr_events.extend(events)
-    # 5.输出events信息
-    print(pr_events)
+    return pr_events
 
 
-search_pr_events("tensorflow", 53262, [])
+repo = "tensorflow"
+pr_events = search_pr_events(repo, 53496)
+print(pr_events)
+
+
+df = pd.DataFrame(data=pr_events)
+filepath = f"event_log_data/{repo}.csv"
+#从df中筛选出需要的字段
+df.to_csv(filepath, header=True, index=False, mode='a')
