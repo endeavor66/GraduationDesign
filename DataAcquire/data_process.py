@@ -26,30 +26,30 @@ def get_pr_attributes(repo: str, pr_number: int) -> (datetime, datetime):
 
 
 '''
-功能：在events表中从created_at向前回溯，找到最近一个payload.forkee.full_name(克隆仓名)==repo的ForkEvent
+功能：在events表中找到payload.forkee.full_name(克隆仓名)==repo的ForkEvent
 输入：
     repo: str -> head关联的仓库名
     created_at: datetime -> PR被创建的时间
 输出：
     搜索到的事件，如果没找到则返回None
 '''
-def get_fork_event(repo: str, created_at: datetime) -> List:
-    sql = f"select * from events where created_at <= '{created_at}' and type='ForkEvent' and payload_forkee_full_name='{repo}' order by created_at desc"
-    data = select_one(sql)
+def get_fork_event(repo: str) -> List:
+    sql = f"select * from events where type='ForkEvent' and payload_forkee_full_name='{repo}'"
+    data = select_all(sql)
     return data
 
 
 '''
-功能：在events表中从created_at向前回溯，找到最近一个payload.ref(新建分支名)==branch的ForkEvent
+功能：在events表中找到payload.ref(新建分支名)==branch的CreateEvent和DeleteEvent
 输入：
     branch: str -> head关联的分支名
     created_at: datetime -> PR被创建的时间
 输出：
     搜索到的事件，如果没找到则返回None
 '''
-def get_create_event(branch: str, created_at: datetime) -> List:
-    sql = f"select * from events where created_at <= '{created_at}' and type='CreateEvent' and payload_ref='%{branch}' order by created_at desc"
-    data = select_one(sql)
+def get_branch_event(branch: str) -> List:
+    sql = f"select * from events where (type='CreateEvent' or type='DeleteEvent') and payload_ref='{branch}'"
+    data = select_all(sql)
     return data
 
 
@@ -65,16 +65,16 @@ def get_create_event(branch: str, created_at: datetime) -> List:
     1) 如果没有fork信息，返回None
     2) 否则，返回搜索到的事件
 '''
-def get_fork_or_create_event(head_repo_fork: bool, head_repo_full_name: str, head_ref: str, created_at: datetime) -> List:
+def get_fork_or_branch_event(head_repo_fork: bool, head_repo_full_name: str, head_ref: str) -> List:
     # 如果没有fork信息，直接返回None
     if head_repo_fork is None:
         return None
     # 如果是fork仓，则搜索forkEvent
     if head_repo_fork:
-        event = get_fork_event(head_repo_full_name, created_at)
+        event = get_fork_event(head_repo_full_name)
     # 如果不是fork仓，则搜索createEvent
     else:
-        event = get_create_event(head_ref, created_at)
+        event = get_branch_event(head_ref)
     return event
 
 
@@ -93,17 +93,12 @@ def search_pr_events(repo: str, pr_number: int) -> List:
     if pr_attributes is None:
         print(f"PR#{pr_number},数据库中没有查询到PR信息")
         return
-    # 2.确定PR的(开始, 结束)时间
-    created_at = pr_attributes['created_at']
-    if created_at is None:
-        print(f"PR#{pr_number} 开始时间为None")
-        return
     # 存储一次完整PR涉及的事件集合
     pr_events = []
     # 2.从events表中提取forkEvent或createEvent
-    event = get_fork_or_create_event(pr_attributes['head_repo_fork'], pr_attributes['head_repo_full_name'], pr_attributes['head_ref'], created_at)
+    event = get_fork_or_branch_event(pr_attributes['head_repo_fork'], pr_attributes['head_repo_full_name'], pr_attributes['head_ref'])
     if event is not None:
-        pr_events.append(event)
+        pr_events.extend(event)
     # 3.从events表中提取PR相关事件: PullRequestEvent、PullRequestReviewEvent、PullRequestReviewCommentEvent、IssueCommentEvent
     events = get_pr_events(pr_number)
     pr_events.extend(events)
