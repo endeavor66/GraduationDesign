@@ -87,30 +87,79 @@ def get_pr_events(pr_number: int) -> List:
     return data
 
 
+'''
+功能：从events中提取特定仓库的特定PR的关联事件
+'''
 def search_pr_events(repo: str, pr_number: int) -> List:
-    # 1.获取特定PR的相关信息
-    pr_attributes = get_pr_attributes(repo, pr_number)
-    if pr_attributes is None:
-        print(f"PR#{pr_number},数据库中没有查询到PR信息")
-        return
     # 存储一次完整PR涉及的事件集合
     pr_events = []
-    # 2.从events表中提取forkEvent或createEvent
+    # 1.从events表中提取forkEvent或createEvent
     event = get_fork_or_branch_event(pr_attributes['head_repo_fork'], pr_attributes['head_repo_full_name'], pr_attributes['head_ref'])
     if event is not None:
         pr_events.extend(event)
-    # 3.从events表中提取PR相关事件: PullRequestEvent、PullRequestReviewEvent、PullRequestReviewCommentEvent、IssueCommentEvent
+    # 2.从events表中提取PR相关事件: PullRequestEvent、PullRequestReviewEvent、PullRequestReviewCommentEvent、IssueCommentEvent
     events = get_pr_events(pr_number)
     pr_events.extend(events)
     return pr_events
 
 
-repo = "tensorflow"
-pr_events = search_pr_events(repo, 53496)
-print(pr_events)
+'''
+功能：对PR关联事件进行加工，转换为事件日志标准格式，并保存在event_log_data目录中
+'''
+def process_pr_events(pr_events: List, pr_state: bool, pr_number: int):
+    # 1.细化事件类型
+    for event in pr_events:
+        if event['type'] == 'ForkEvent':
+            event['type'] = 'ForkRepository'
+            event['payload_pr_number'] = pr_number
+        elif event['type'] == 'CreateEvent':
+            event['type'] = 'CreateBranch'
+            event['payload_pr_number'] = pr_number
+        elif event['type'] == 'DeleteEvent':
+            event['type'] = 'DeleteBranch'
+            event['payload_pr_number'] = pr_number
+        elif event['type'] == 'PullRequestEvent':
+            if event['payload_action'] == 'opened':
+                event['type'] = 'CreatePR'
+            elif event['payload_action'] == 'closed' and pr_state == 1:
+                event['type'] = 'MergePR'
+            elif event['payload_action'] == 'closed' and pr_state == 0:
+                event['type'] = 'ClosePR'
+        elif event['type'] == 'PullRequestReviewEvent':
+            if event['payload_review_state'] == 'approve':
+                event['type'] = 'PRReviewApprove'
+            elif event['payload_review_state'] == 'request changes':
+                event['type'] = 'PRReviewReject'
+            elif event['payload_review_state'] == 'comment':
+                event['type'] = 'PRReviewComment'
+        else:
+            continue
+    # 2.提取事件日志需要的列
+    df = pd.DataFrame(data=pr_events)
+    df.rename(columns={"payload_pr_number": "CaseID", "created_at": "StartTimestamp", "type": "Activity", "actor_login": "People"}, inplace=True)
+    df = df[["CaseID", "StartTimestamp", "Activity", "People"]]
+    # 3.保存为文件
+    filepath = f"event_log_data/{repo}.csv"
+    df.to_csv(filepath, header=True, index=False, mode='a')
 
 
-df = pd.DataFrame(data=pr_events)
-filepath = f"event_log_data/{repo}.csv"
-#从df中筛选出需要的字段
-df.to_csv(filepath, header=True, index=False, mode='a')
+'''
+功能：全流程自动化
+'''
+def auto_process(repo: str, pr_number: int):
+    # 1.获取特定PR的状态，是否合入
+    pr_attributes = get_pr_attributes(repo, pr_number)
+    if pr_attributes is None:
+        print(f"PR#{pr_number},数据库中没有查询到PR信息")
+    pr_events = search_pr_events(repo, pr_number)
+    pr_state = pr_attributes['merged']
+    process_pr_events(pr_events, pr_state, pr_number)
+
+
+if __name__ == '__main__':
+    repo = "tensorflow"
+    pr_number = 53496
+    auto_process(repo, pr_number)
+
+
+

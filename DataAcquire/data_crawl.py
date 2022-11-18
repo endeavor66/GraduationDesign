@@ -8,7 +8,7 @@ repo = 'tensorflow/tensorflow'
 start = datetime.now()
 
 gh = get_client()
-archive = gh.get('2021-12-21 00:00:00', '2021-12-21 23:00:00', filters=[
+archive = gh.get('2021-12-01 00:00:00', '2021-12-01 23:00:00', filters=[
     ('repo.name', repo)
 ])
 
