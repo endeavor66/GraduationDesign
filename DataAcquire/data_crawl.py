@@ -8,7 +8,7 @@ repo = 'tensorflow/tensorflow'
 start = datetime.now()
 
 gh = get_client()
-archive = gh.get('2021-12-23 01:00:00', '2021-12-23 01:00:00', filters=[
+archive = gh.get('2021-12-21 00:00:00', '2021-12-21 23:00:00', filters=[
     ('repo.name', repo)
 ])
 
@@ -37,6 +37,10 @@ for archive_element in archive:
          archive_element.payload.pull_request.number if archive_element.payload.pull_request is not None else None,
          archive_element.payload.forkee.full_name if archive_element.payload.forkee is not None else None,
          archive_element.payload.changes,
+         # PullRequestReviewEvent相关
+         archive_element.payload.review.state if archive_element.payload.review is not None else None,
+         archive_element.payload.review.author_association if archive_element.payload.review is not None else None,
+         # MemberEvent相关
          archive_element.payload.member.id if archive_element.payload.member is not None else None,
          archive_element.payload.member.login if archive_element.payload.member is not None else None,
          archive_element.payload.member.type if archive_element.payload.member is not None else None,

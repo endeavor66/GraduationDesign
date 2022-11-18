@@ -23,6 +23,8 @@ TABLE_FIELDS = {
         "payload_pr_number",
         "payload_forkee_full_name",
         "payload_changes",
+        "payload_review_state",
+        "payload_review_author_association",
         "payload_member_id",
         "payload_member_login",
         "payload_member_type",
