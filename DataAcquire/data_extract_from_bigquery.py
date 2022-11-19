@@ -22,7 +22,11 @@ def join_commits_sha(commits: str) -> str:
 def check(v):
     if pd.isna(v):
         return None
+    # 如果v是字符串，且首尾带引号，去掉引号; 否则直接返回
+    if isinstance(v, str) and v[0] == "\"" and v[-1] == "\"":
+        v = v[1:-1]
     return v
+
 
 
 '''

@@ -10,6 +10,7 @@
 """
 
 import pandas as pd
+import os
 from typing import List
 from datetime import datetime
 from utils.mysql_utils import select_all, select_one
@@ -103,7 +104,8 @@ def search_pr_events(repo: str, pr_number: int, pr_attributes: dict) -> List:
     # 3.保存为中间文件temp_data
     df = pd.DataFrame(data=pr_events)
     filepath = f"event_log_data/temp_data/{repo}.csv"
-    df.to_csv(filepath, header=False, index=False, mode='a')
+    header = not os.path.exists(filepath)
+    df.to_csv(filepath, header=header, index=False, mode='a')
     return pr_events
 
 
@@ -136,15 +138,17 @@ def process_pr_events(pr_events: List, pr_state: bool, pr_number: int):
                 event['type'] = 'PRReviewReject'
             elif event['payload_review_state'] == 'commented':
                 event['type'] = 'PRReviewComment'
-        else:
-            continue
+        # PullRequestReviewCommentEvent 和 PullRequestReviewEvent.review_state='commented'视作相同类型的活动
+        elif event['type'] == 'PullRequestReviewCommentEvent':
+            event['type'] = 'PRReviewComment'
     # 2.提取事件日志需要的列
     df = pd.DataFrame(data=pr_events)
     df.rename(columns={"payload_pr_number": "CaseID", "created_at": "StartTimestamp", "type": "Activity", "actor_login": "People"}, inplace=True)
     df = df[["CaseID", "StartTimestamp", "Activity", "People"]]
     # 3.保存为文件
     filepath = f"event_log_data/{repo}.csv"
-    df.to_csv(filepath, header=False, index=False, mode='a')
+    header = not os.path.exists(filepath)
+    df.to_csv(filepath, header=header, index=False, mode='a')
 
 
 '''
@@ -163,8 +167,6 @@ def auto_process(repo: str, pr_number: int):
 
 if __name__ == '__main__':
     repo = "tensorflow"
-    pr_number = 53511
+    pr_number = 53490
     auto_process(repo, pr_number)
-
-
 
