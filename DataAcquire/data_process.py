@@ -90,7 +90,7 @@ def get_pr_events(pr_number: int) -> List:
 '''
 功能：从events中提取特定仓库的特定PR的关联事件
 '''
-def search_pr_events(repo: str, pr_number: int) -> List:
+def search_pr_events(repo: str, pr_number: int, pr_attributes: dict) -> List:
     # 存储一次完整PR涉及的事件集合
     pr_events = []
     # 1.从events表中提取forkEvent或createEvent
@@ -100,6 +100,10 @@ def search_pr_events(repo: str, pr_number: int) -> List:
     # 2.从events表中提取PR相关事件: PullRequestEvent、PullRequestReviewEvent、PullRequestReviewCommentEvent、IssueCommentEvent
     events = get_pr_events(pr_number)
     pr_events.extend(events)
+    # 3.保存为中间文件temp_data
+    df = pd.DataFrame(data=pr_events)
+    filepath = f"event_log_data/temp_data/{repo}.csv"
+    df.to_csv(filepath, header=False, index=False, mode='a')
     return pr_events
 
 
@@ -126,11 +130,11 @@ def process_pr_events(pr_events: List, pr_state: bool, pr_number: int):
             elif event['payload_action'] == 'closed' and pr_state == 0:
                 event['type'] = 'ClosePR'
         elif event['type'] == 'PullRequestReviewEvent':
-            if event['payload_review_state'] == 'approve':
+            if event['payload_review_state'] == 'approved':
                 event['type'] = 'PRReviewApprove'
-            elif event['payload_review_state'] == 'request changes':
+            elif event['payload_review_state'] == 'changes_requested':
                 event['type'] = 'PRReviewReject'
-            elif event['payload_review_state'] == 'comment':
+            elif event['payload_review_state'] == 'commented':
                 event['type'] = 'PRReviewComment'
         else:
             continue
@@ -140,7 +144,7 @@ def process_pr_events(pr_events: List, pr_state: bool, pr_number: int):
     df = df[["CaseID", "StartTimestamp", "Activity", "People"]]
     # 3.保存为文件
     filepath = f"event_log_data/{repo}.csv"
-    df.to_csv(filepath, header=True, index=False, mode='a')
+    df.to_csv(filepath, header=False, index=False, mode='a')
 
 
 '''
@@ -151,14 +155,15 @@ def auto_process(repo: str, pr_number: int):
     pr_attributes = get_pr_attributes(repo, pr_number)
     if pr_attributes is None:
         print(f"PR#{pr_number},数据库中没有查询到PR信息")
-    pr_events = search_pr_events(repo, pr_number)
+        return
+    pr_events = search_pr_events(repo, pr_number, pr_attributes)
     pr_state = pr_attributes['merged']
     process_pr_events(pr_events, pr_state, pr_number)
 
 
 if __name__ == '__main__':
     repo = "tensorflow"
-    pr_number = 53496
+    pr_number = 53511
     auto_process(repo, pr_number)
 
 
