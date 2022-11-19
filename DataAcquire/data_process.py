@@ -15,27 +15,35 @@ from typing import List
 from datetime import datetime
 from utils.mysql_utils import select_all, select_one
 
+EVENT_LOG_DATA_DIR = "event_log_data"
+TEMP_DATA_DIR = f"{EVENT_LOG_DATA_DIR}/temp_data"
+
+if not os.path.exists(TEMP_DATA_DIR):
+    os.makedirs(TEMP_DATA_DIR)
+
+
 '''
 功能：获取特定PR(pr_number)的创建和关闭时间(created_at, closed_at)
 '''
 def get_pr_attributes(repo: str, pr_number: int) -> (datetime, datetime):
-    table = f"{repo}_self"
-    sql = f"select * from {table} where pr_number={pr_number}"
+    shortname = repo[repo.index('/')+1:]
+    table = f"{shortname}_self"
+    sql = f"select * from {table} where repo_name='{shortname}' and pr_number={pr_number}"
     data = select_one(sql)
-    print(data)
     return data
 
 
 '''
 功能：在events表中找到payload.forkee.full_name(克隆仓名)==repo的ForkEvent
 输入：
-    repo: str -> head关联的仓库名
+    repo: str -> 当前仓库
     created_at: datetime -> PR被创建的时间
+    head_repo_full_name: str -> head关联的仓库名
 输出：
     搜索到的事件，如果没找到则返回None
 '''
-def get_fork_event(repo: str) -> List:
-    sql = f"select * from events where type='ForkEvent' and payload_forkee_full_name='{repo}'"
+def get_fork_event(repo: str, head_repo_full_name: str) -> List:
+    sql = f"select * from events where repo_name='{repo}' and type='ForkEvent' and payload_forkee_full_name='{head_repo_full_name}'"
     data = select_all(sql)
     return data
 
@@ -43,13 +51,13 @@ def get_fork_event(repo: str) -> List:
 '''
 功能：在events表中找到payload.ref(新建分支名)==branch的CreateEvent和DeleteEvent
 输入：
+    repo: str -> 当前仓库
     branch: str -> head关联的分支名
-    created_at: datetime -> PR被创建的时间
 输出：
     搜索到的事件，如果没找到则返回None
 '''
-def get_branch_event(branch: str) -> List:
-    sql = f"select * from events where (type='CreateEvent' or type='DeleteEvent') and payload_ref='{branch}'"
+def get_branch_event(repo: str, branch: str) -> List:
+    sql = f"select * from events where repo_name='{repo}' and (type='CreateEvent' or type='DeleteEvent') and payload_ref='{branch}'"
     data = select_all(sql)
     return data
 
@@ -66,24 +74,21 @@ def get_branch_event(branch: str) -> List:
     1) 如果没有fork信息，返回None
     2) 否则，返回搜索到的事件
 '''
-def get_fork_or_branch_event(head_repo_fork: bool, head_repo_full_name: str, head_ref: str) -> List:
-    # 如果没有fork信息，直接返回None
-    if head_repo_fork is None:
-        return None
-    # 如果是fork仓，则搜索forkEvent
-    if head_repo_fork:
-        event = get_fork_event(head_repo_full_name)
+def get_fork_or_branch_event(repo: str, head_repo_fork: bool, head_repo_full_name: str, head_ref: str) -> List:
     # 如果不是fork仓，则搜索createEvent
-    else:
-        event = get_branch_event(head_ref)
+    if (head_repo_fork is None) or (head_repo_fork == False):
+        event = get_branch_event(repo, head_ref)
+    # 如果是fork仓，则搜索forkEvent
+    elif head_repo_fork:
+        event = get_fork_event(repo, head_repo_full_name)
     return event
 
 
 '''
 功能：从events表中提取特定PR(pr_number)的相关事件
 '''
-def get_pr_events(pr_number: int) -> List:
-    sql = f"select * from events where payload_pr_number={pr_number} and (type='PullRequestEvent' OR type='PullRequestReviewEvent' OR type='PullRequestReviewCommentEvent')"
+def get_pr_events(repo: str, pr_number: int) -> List:
+    sql = f"select * from events where repo_name='{repo}' and payload_pr_number={pr_number} and (type='PullRequestEvent' OR type='PullRequestReviewEvent' OR type='PullRequestReviewCommentEvent')"
     data = select_all(sql)
     return data
 
@@ -95,15 +100,16 @@ def search_pr_events(repo: str, pr_number: int, pr_attributes: dict) -> List:
     # 存储一次完整PR涉及的事件集合
     pr_events = []
     # 1.从events表中提取forkEvent或createEvent
-    event = get_fork_or_branch_event(pr_attributes['head_repo_fork'], pr_attributes['head_repo_full_name'], pr_attributes['head_ref'])
+    event = get_fork_or_branch_event(repo, pr_attributes['head_repo_fork'], pr_attributes['head_repo_full_name'], pr_attributes['head_ref'])
     if event is not None:
         pr_events.extend(event)
     # 2.从events表中提取PR相关事件: PullRequestEvent、PullRequestReviewEvent、PullRequestReviewCommentEvent、IssueCommentEvent
-    events = get_pr_events(pr_number)
+    events = get_pr_events(repo, pr_number)
     pr_events.extend(events)
     # 3.保存为中间文件temp_data
     df = pd.DataFrame(data=pr_events)
-    filepath = f"event_log_data/temp_data/{repo}.csv"
+    shortname = repo[repo.index('/') + 1:]
+    filepath = f"{TEMP_DATA_DIR}/{shortname}.csv"
     header = not os.path.exists(filepath)
     df.to_csv(filepath, header=header, index=False, mode='a')
     return pr_events
@@ -126,7 +132,9 @@ def process_pr_events(pr_events: List, pr_state: bool, pr_number: int):
             event['payload_pr_number'] = pr_number
         elif event['type'] == 'PullRequestEvent':
             if event['payload_action'] == 'opened':
-                event['type'] = 'CreatePR'
+                event['type'] = 'OpenPR'
+            elif event['payload_action'] == 'reopened':
+                event['type'] = 'ReopenPR'
             elif event['payload_action'] == 'closed' and pr_state == 1:
                 event['type'] = 'MergePR'
             elif event['payload_action'] == 'closed' and pr_state == 0:
@@ -146,7 +154,8 @@ def process_pr_events(pr_events: List, pr_state: bool, pr_number: int):
     df.rename(columns={"payload_pr_number": "CaseID", "created_at": "StartTimestamp", "type": "Activity", "actor_login": "People"}, inplace=True)
     df = df[["CaseID", "StartTimestamp", "Activity", "People"]]
     # 3.保存为文件
-    filepath = f"event_log_data/{repo}.csv"
+    shortname = repo[repo.index('/')+1:]
+    filepath = f"{EVENT_LOG_DATA_DIR}/{shortname}.csv"
     header = not os.path.exists(filepath)
     df.to_csv(filepath, header=header, index=False, mode='a')
 
@@ -166,7 +175,7 @@ def auto_process(repo: str, pr_number: int):
 
 
 if __name__ == '__main__':
-    repo = "tensorflow"
-    pr_number = 53490
-    auto_process(repo, pr_number)
+    repo = "tensorflow/tensorflow"
+    for pr_number in range(53259, 53596):
+        auto_process(repo, pr_number)
 

@@ -72,5 +72,6 @@ def extract_data_from_bigquery_csv(repo: str, filepath: str):
 
 if __name__ == '__main__':
     repo = "tensorflow/tensorflow"
-    filepath = "bigquery_data/20211210.csv"
+    filepath = f"bigquery_data/20211231.csv"
     extract_data_from_bigquery_csv(repo, filepath)
+    print(f"{filepath} process done")
