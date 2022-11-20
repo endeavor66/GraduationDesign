@@ -11,9 +11,11 @@
 
 import pandas as pd
 import os
+import json
 from typing import List
 from datetime import datetime
-from utils.mysql_utils import select_all, select_one
+from utils.mysql_utils import select_all, select_one, TABLE_FIELDS
+from utils.time_utils import time_reverse
 
 EVENT_LOG_DATA_DIR = "event_log_data"
 TEMP_DATA_DIR = f"{EVENT_LOG_DATA_DIR}/temp_data"
@@ -85,6 +87,28 @@ def get_fork_or_branch_event(repo: str, head_repo_fork: bool, head_repo_full_nam
 
 
 '''
+功能：从json串中提取commit关键字段（提交者、提交时间），封装为PushEvent后返回
+'''
+def get_commit_event(commit_content: str) -> List:
+    commit_events = []
+    commit_dic_list = json.loads(commit_content)
+    for commit in commit_dic_list:
+        # 初始化一个event
+        event = dict()
+        for field in TABLE_FIELDS['events']:
+            event[field] = None
+        # 填充event的关键属性
+        event['type'] = 'PushEvent'
+        try:
+            event['created_at'] = time_reverse(commit['commit']['committer']['date'])
+        except:
+            event['created_at'] = None
+        event['actor_id'] = commit['author']['id'] if commit['author'] is not None else None
+        event['actor_login'] = commit['author']['login'] if commit['author'] is not None else None
+        commit_events.append(event)
+    return commit_events
+
+'''
 功能：从events表中提取特定PR(pr_number)的相关事件
 '''
 def get_pr_events(repo: str, pr_number: int) -> List:
@@ -103,10 +127,13 @@ def search_pr_events(repo: str, pr_number: int, pr_attributes: dict) -> List:
     event = get_fork_or_branch_event(repo, pr_attributes['head_repo_fork'], pr_attributes['head_repo_full_name'], pr_attributes['head_ref'])
     if event is not None:
         pr_events.extend(event)
-    # 2.从events表中提取PR相关事件: PullRequestEvent、PullRequestReviewEvent、PullRequestReviewCommentEvent、IssueCommentEvent
+    # 2.从pr_attributes中提取commit事件
+    commit_events = get_commit_event(pr_attributes['commit_content'])
+    pr_events.extend(commit_events)
+    # 3.从events表中提取PR相关事件: PullRequestEvent、PullRequestReviewEvent、PullRequestReviewCommentEvent、IssueCommentEvent
     events = get_pr_events(repo, pr_number)
     pr_events.extend(events)
-    # 3.保存为中间文件temp_data
+    # 4.保存为中间文件temp_data
     df = pd.DataFrame(data=pr_events)
     shortname = repo[repo.index('/') + 1:]
     filepath = f"{TEMP_DATA_DIR}/{shortname}.csv"
@@ -126,6 +153,9 @@ def process_pr_events(pr_events: List, pr_state: bool, pr_number: int):
             event['payload_pr_number'] = pr_number
         elif event['type'] == 'CreateEvent':
             event['type'] = 'CreateBranch'
+            event['payload_pr_number'] = pr_number
+        elif event['type'] == 'PushEvent':
+            event['type'] = 'SubmitCommit'
             event['payload_pr_number'] = pr_number
         elif event['type'] == 'DeleteEvent':
             event['type'] = 'DeleteBranch'
@@ -178,4 +208,5 @@ if __name__ == '__main__':
     repo = "tensorflow/tensorflow"
     for pr_number in range(53259, 53596):
         auto_process(repo, pr_number)
+    # auto_process(repo, 53493)
 
