@@ -1,7 +1,7 @@
 import os
 
 # 获取本地文件中的access_tocken相关值
-def get_token(num=0):
+def get_token():
     filepath = "D:\\PythonProject\\GraduationDesign\\utils\\resources\\token.txt"
     with open(filepath, 'r') as reader:
         token = reader.readline()

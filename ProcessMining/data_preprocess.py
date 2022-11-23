@@ -11,7 +11,7 @@ if __name__ == "__main__":
     file_path = f"../DataAcquire/event_log_data/{repo}.csv"
     df = pd.read_csv(file_path, sep=',')
     log = pm4py.format_dataframe(df, case_id='CaseID',
-                                       activity_key='Activity', timestamp_key='StartTimestamp')
+                                       activity_key='Activity', timestamp_key='StartTimestamp', timest_format='%Y-%m-%d %H:%M:%S')
     # log_filter = pm4py.filter_start_activities(log, ['CreateBranch', 'ForkRepository', 'CreatePR', 'SubmitCommit'], retain=True)
     # log_filter2 = pm4py.filter_end_activities(log_filter, ['ClosePR', 'MergePR', 'DeleteBranch', 'SubmitCommit'], retain=True)
 
