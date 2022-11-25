@@ -145,7 +145,7 @@ def search_pr_events(repo: str, pr_number: int, pr_attributes: dict) -> List:
 '''
 功能：对PR关联事件进行加工，转换为事件日志标准格式，并保存在event_log_data目录中
 '''
-def process_pr_events(pr_events: List, pr_state: bool, pr_number: int):
+def process_pr_events(pr_events: List, pr_state: bool, pr_number: int, filepath: str) -> None:
     # 1.细化事件类型
     for event in pr_events:
         if event['type'] == 'ForkEvent':
@@ -184,29 +184,64 @@ def process_pr_events(pr_events: List, pr_state: bool, pr_number: int):
     df.rename(columns={"payload_pr_number": "CaseID", "created_at": "StartTimestamp", "type": "Activity", "actor_login": "People"}, inplace=True)
     df = df[["CaseID", "StartTimestamp", "Activity", "People"]]
     # 3.保存为文件
-    shortname = repo[repo.index('/')+1:]
-    filepath = f"{EVENT_LOG_DATA_DIR}/{shortname}.csv"
     header = not os.path.exists(filepath)
     df.to_csv(filepath, header=header, index=False, mode='a')
+
+
+def get_filepath(repo: str, pr_state: bool, is_fork: bool) -> str:
+    shortname = repo[repo.index('/') + 1:]
+    filepath = f"{EVENT_LOG_DATA_DIR}/{shortname}"
+    if is_fork and pr_state:
+        filepath = filepath + "_fork_merge.csv"
+    elif is_fork and (not pr_state):
+        filepath = filepath + "_fork_close.csv"
+    elif (not is_fork) and pr_state:
+        filepath = filepath + "_unfork_merge.csv"
+    elif (not is_fork) and (not pr_state):
+        filepath = filepath + "_unfork_close.csv"
+    return filepath
 
 
 '''
 功能：全流程自动化
 '''
 def auto_process(repo: str, pr_number: int):
-    # 1.获取特定PR的状态，是否合入
+    # 1.获取PR所有属性
     pr_attributes = get_pr_attributes(repo, pr_number)
     if pr_attributes is None:
         print(f"PR#{pr_number},数据库中没有查询到PR信息")
         return
+    # 2.搜索PR所有关联事件
     pr_events = search_pr_events(repo, pr_number, pr_attributes)
     pr_state = pr_attributes['merged']
-    process_pr_events(pr_events, pr_state, pr_number)
+    is_fork = pr_attributes['head_repo_fork']
+    # 3.剔除无效PR(没有明确的合入状态或fork信息)
+    if pr_state is None or is_fork is None:
+        print(f"PR#{pr_number},merged或head_repo_fork字段为None")
+        return
+    # 4.加工PR，从中提取关键属性
+    filepath = get_filepath(repo, pr_state, is_fork)
+    process_pr_events(pr_events, pr_state, pr_number, filepath)
+    print(f"PR#{pr_number} process done")
+
+
+def get_all_pr_number_between(repo: str, start: datetime, end: datetime) -> List:
+    shortname = repo[repo.index('/') + 1:]
+    table = f"{shortname}_self"
+    start_time = start.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end.strftime('%Y-%m-%d %H:%M:%S')
+    sql = f"select pr_number from {table} where created_at >= '{start_time}' and created_at < '{end_time}'"
+    data = select_all(sql)
+    return data
 
 
 if __name__ == '__main__':
     repo = "tensorflow/tensorflow"
-    for pr_number in range(53259, 53596):
+    start = datetime(2021, 9, 1)
+    end = datetime(2022, 1, 1)
+    pr_list = get_all_pr_number_between(repo, start, end)
+    for pr in pr_list:
+        pr_number = pr['pr_number']
         auto_process(repo, pr_number)
     # auto_process(repo, 53493)
 

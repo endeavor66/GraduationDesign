@@ -58,6 +58,6 @@ def crawl_data(repo: str, start_time: datetime, end_time: datetime):
 
 if __name__ == '__main__':
     repo = 'tensorflow/tensorflow'
-    start_time = datetime(2021, 12, 9, 0, 0, 0)  # 年，月，日，时，分，秒 其中年，月，日是必须的
-    end_time = datetime(2021, 12, 9, 23, 0, 0)
+    start_time = datetime(2021, 10, 26, 0, 0, 0)  # 年，月，日，时，分，秒 其中年，月，日是必须的
+    end_time = datetime(2021, 10, 28, 23, 0, 0)
     crawl_data(repo, start_time, end_time)

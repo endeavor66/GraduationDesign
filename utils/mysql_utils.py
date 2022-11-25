@@ -81,6 +81,7 @@ def select_all(sql):
     conn.close()
     return data
 
+
 def select_one(sql):
     print("执行SQL: " + sql)
     conn.ping(reconnect=True)

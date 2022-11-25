@@ -12,7 +12,7 @@ repo = 'tensorflow'
 table = f"{repo}_self_back"
 
 # 查询所有pr_number
-select_sql = f"select pr_number from {table} where pr_number >= 25873"
+select_sql = f"select pr_number from {table} where pr_number >= 27645"
 cursor = conn.cursor()
 conn.ping(reconnect=True)
 print("执行SQL:" + select_sql)

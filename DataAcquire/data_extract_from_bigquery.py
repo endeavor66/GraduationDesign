@@ -72,6 +72,17 @@ def extract_data_from_bigquery_csv(repo: str, filepath: str):
 
 if __name__ == '__main__':
     repo = "tensorflow/tensorflow"
-    filepath = f"bigquery_data/20211231.csv"
-    extract_data_from_bigquery_csv(repo, filepath)
-    print(f"{filepath} process done")
+    from datetime import datetime, timedelta
+    import os
+    start = datetime(2021, 10, 26)  # 年，月，日，时，分，秒 其中年，月，日是必须的
+    end = datetime(2021, 11, 1)
+    while start < end:
+        cur = start.strftime("%Y%m%d")
+        filepath = f"bigquery_data/{cur}.csv"
+        if not os.path.exists(filepath):
+            print(f"{filepath} does not exist")
+            start = start + timedelta(days=1)
+            continue
+        extract_data_from_bigquery_csv(repo, filepath)
+        print(f"{filepath} process done")
+        start = start + timedelta(days=1)
