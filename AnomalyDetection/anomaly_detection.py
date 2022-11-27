@@ -24,10 +24,12 @@ def boxplot(data: List[Union[int, float]], x: Union[int, float]) -> bool:
 功能：基于孤立森林算法来检测x是否为异常点
 '''
 def isolation_forest(data: List[Union[int, float]], x: Union[int, float]) -> bool:
-    clf = IsolationForest(random_state=0).fit(data)
-    y = clf.predict(x)
+    model = IsolationForest(random_state=0)
+    model.fit(data)
+    score = model.decision_function(x)
+    anomaly = model.predict(x)
     # Returns -1 for anomalies/outliers and +1 for inliers.
-    return y
+    return anomaly
 
 
 '''

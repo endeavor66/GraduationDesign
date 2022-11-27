@@ -74,8 +74,8 @@ if __name__ == '__main__':
     repo = "tensorflow/tensorflow"
     from datetime import datetime, timedelta
     import os
-    start = datetime(2021, 10, 26)  # 年，月，日，时，分，秒 其中年，月，日是必须的
-    end = datetime(2021, 11, 1)
+    start = datetime(2021, 1, 1)  # 年，月，日，时，分，秒 其中年，月，日是必须的
+    end = datetime(2021, 2, 1)
     while start < end:
         cur = start.strftime("%Y%m%d")
         filepath = f"bigquery_data/{cur}.csv"

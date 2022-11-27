@@ -52,7 +52,7 @@ def insert_batch(table, datas, repo):
     fields = ",".join(TABLE_FIELDS[table])
     fields_param = ("%s," * len(TABLE_FIELDS[table]))[0:-1]
     sql = "insert into " + table + "(" + fields + ")" + " values " + "(" + fields_param + ")"
-    print("执行SQL: " + sql)
+    # print("执行SQL: " + sql)
 
     try:
         cursor = conn.cursor()
@@ -72,7 +72,7 @@ def insert_batch(table, datas, repo):
 对table执行sql查询
 """
 def select_all(sql):
-    print("执行SQL: " + sql)
+    # print("执行SQL: " + sql)
     conn.ping(reconnect=True)
     cursor = conn.cursor()
     cursor.execute(sql)
