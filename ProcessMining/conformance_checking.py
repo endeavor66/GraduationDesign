@@ -2,7 +2,7 @@ import pm4py
 import pandas as pd
 from typing import Union, List, Dict, Any
 from pm4py.objects.log.obj import EventLog
-from Config import *
+from ProcessMining.Config import *
 
 
 def conformance_checking(log: Union[EventLog, pd.DataFrame]) -> List[Dict[str, Any]]:

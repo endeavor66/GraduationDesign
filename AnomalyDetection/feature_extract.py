@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from utils.mysql_utils import select_all
 from utils.time_utils import time_reverse
-from Config import *
+from AnomalyDetection.Config import *
 
 
 '''

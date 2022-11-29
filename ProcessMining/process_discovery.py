@@ -4,7 +4,7 @@ from typing import Union
 from pm4py.objects.log.obj import EventLog
 from pm4py.algo.evaluation.generalization import algorithm as generalization_evaluator
 from pm4py.algo.evaluation.simplicity import algorithm as simplicity_evaluator
-from Config import *
+from ProcessMining.Config import *
 
 
 def process_discovery(log: Union[EventLog, pd.DataFrame]) -> None:
