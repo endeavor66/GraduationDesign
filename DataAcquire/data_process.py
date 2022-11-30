@@ -32,8 +32,8 @@ def get_create_branch_event(repo: str, branch: str, pr_open_time: datetime) -> D
     pr_open_time = pr_open_time + timedelta(minutes=3)
     sql = f"select * from events where repo_name='{repo}' and type='CreateEvent' and payload_ref='{branch}' and created_at < '{pr_open_time}' ORDER BY created_at DESC LIMIT 1"
     data = select_one(sql)
-    if not pd.isna(data):
-        data['created_at'] = data['created_at'] - timedelta(minutes=3)
+    if (not pd.isna(data)) and data['created_at'] > pr_open_time:
+        data['created_at'] = pr_open_time - timedelta(seconds=10)
     return data
 
 
@@ -112,7 +112,8 @@ def get_push_event(pr_attributes: dict) -> List:
     start_time = get_first_commit_time(pr_attributes['commit_content'])
     end_time = pr_attributes['closed_at']
     if pd.isna(start_time) or pd.isna(end_time):
-        raise Exception(f"无法确定PushEvent的搜索起止时间段, start_time:{start_time}, end_time:{end_time}")
+        print(f"无法确定PushEvent的搜索起止时间段, start_time:{start_time}, end_time:{end_time}")
+        return []
     # 条件二:PushEvent的关联分支
     head_repo_full_name = pr_attributes['head_repo_full_name']
     head_ref = pr_attributes['head_ref']
@@ -249,6 +250,9 @@ def auto_process(repo: str, pr_number: int):
     if pd.isna(pr_state) or pd.isna(is_fork):
         print(f"PR#{pr_number},merged或head_repo_fork字段为None")
         return
+    if len(pr_events) == 0:
+        print(f"PR#{pr_number},没有找到相关事件")
+        return
     # 4.加工PR，从中提取关键属性
     filepath = get_filepath(repo, pr_state, is_fork)
     process_pr_events(pr_events, pr_state, pr_number, filepath)
@@ -270,10 +274,15 @@ def get_all_pr_number_between(repo: str, start: datetime, end: datetime) -> List
 
 if __name__ == '__main__':
     repo = "tensorflow/tensorflow"
-    start = datetime(2021, 1, 1)
-    end = datetime(2021, 2, 1)
+    start = datetime(2021, 6, 1)
+    end = datetime(2021, 7, 1)
     pr_list = get_all_pr_number_between(repo, start, end)
+    total = len(pr_list)
+    index = 1
     for pr in pr_list:
         pr_number = pr['pr_number']
-        auto_process(repo, pr_number)
+        if pr_number > 50342:
+            auto_process(repo, pr_number)
+        print(f"{index}/{total}")
+        index += 1
     # auto_process(repo, 50323)

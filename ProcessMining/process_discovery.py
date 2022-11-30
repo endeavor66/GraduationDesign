@@ -8,19 +8,13 @@ from ProcessMining.Config import *
 
 
 def process_discovery(log: Union[EventLog, pd.DataFrame]) -> None:
-    # 启发式算法
+    # 启发式算法，这里还可替换为不同的算法：alpha算法，inductive算法
     net = pm4py.discover_heuristics_net(log, dependency_threshold=0.9)
     pm4py.view_heuristics_net(net)
 
+    # 转化为Petri-Net
     petri_net, initial_marking, final_marking = pm4py.convert_to_petri_net(net)
-    # net, initial_marking, final_marking = pm4py.discover_petri_net_heuristics(log)
-
-    # alpha算法
-    # net, initial_marking, final_marking = pm4py.discover_petri_net_alpha(log)
-
-    # inductive算法
-    # net, initial_marking, final_marking = pm4py.discover_petri_net_inductive(log)
-    pm4py.view_petri_net(petri_net, initial_marking, final_marking)
+    # pm4py.view_petri_net(petri_net, initial_marking, final_marking)
 
     # 模型评估
     model_evaluation(log, petri_net, initial_marking, final_marking)
@@ -58,7 +52,7 @@ if __name__ == "__main__":
         filepath = f"{PROCESS_DATA_DIR}/{filename}"
 
         # 加载事件日志
-        log = pd.read_csv(filepath)
+        log = pd.read_csv(filepath, parse_dates=['time:timestamp'], infer_datetime_format=True)
 
         # # 过程发现
         process_discovery(log)
