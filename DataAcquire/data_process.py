@@ -3,7 +3,7 @@ import os
 import json
 from typing import List, Dict
 from datetime import datetime, timedelta
-from utils.mysql_utils import select_all, select_one, TABLE_FIELDS
+from utils.mysql_utils import select_all, select_one
 from utils.time_utils import time_reverse
 from DataAcquire.Config import *
 
@@ -11,9 +11,8 @@ from DataAcquire.Config import *
 功能：获取特定PR(pr_number)的创建和关闭时间(created_at, closed_at)
 '''
 def get_pr_attributes(repo: str, pr_number: int) -> (datetime, datetime):
-    shortname = repo[repo.index('/') + 1:]
-    table = f"{shortname}_self"
-    sql = f"select * from {table} where repo_name='{shortname}' and pr_number={pr_number}"
+    table = f"{repo}_self"
+    sql = f"select * from {table} where repo_name='{repo}' and pr_number={pr_number}"
     data = select_one(sql)
     return data
 
@@ -21,16 +20,16 @@ def get_pr_attributes(repo: str, pr_number: int) -> (datetime, datetime):
 '''
 功能：在events表中找到payload.ref(新建分支名)==branch的CreateEvent(最接近pr_open_time的一条记录)
 输入：
-    repo: str -> 当前仓库
+    repo_full_name: str -> 当前仓库
     branch: str -> head关联的分支名
     pr_open_time: datetime -> pr创建的时间
 输出：
     搜索到的事件，如果没找到则返回None
 '''
-def get_create_branch_event(repo: str, branch: str, pr_open_time: datetime) -> Dict:
+def get_create_branch_event(repo: str, repo_full_name: str, branch: str, pr_open_time: datetime) -> Dict:
     # 发现很多异常数据: create_event 仅在 pr_open_time 之后不到一分钟内发生，因此将 create_event 的创建时间修改提前三分钟，人工消除误差
-    pr_open_time = pr_open_time + timedelta(minutes=3)
-    sql = f"select * from events where repo_name='{repo}' and type='CreateEvent' and payload_ref='{branch}' and created_at < '{pr_open_time}' ORDER BY created_at DESC LIMIT 1"
+    search_time = pr_open_time + timedelta(minutes=3)
+    sql = f"select * from {repo}_events where repo_name='{repo_full_name}' and type='CreateEvent' and payload_ref='{branch}' and created_at < '{search_time}' ORDER BY created_at DESC LIMIT 1"
     data = select_one(sql)
     if (not pd.isna(data)) and data['created_at'] > pr_open_time:
         data['created_at'] = pr_open_time - timedelta(seconds=10)
@@ -46,8 +45,8 @@ def get_create_branch_event(repo: str, branch: str, pr_open_time: datetime) -> D
 输出：
     搜索到的事件，如果没找到则返回None
 '''
-def get_delete_branch_event(repo: str, branch: str, pr_close_time: datetime) -> Dict:
-    sql = f"select * from events where repo_name='{repo}' and type='DeleteEvent' and payload_ref='{branch}' and created_at > '{pr_close_time}' ORDER BY created_at ASC LIMIT 1"
+def get_delete_branch_event(repo: str, repo_full_name: str, branch: str, pr_close_time: datetime) -> Dict:
+    sql = f"select * from {repo}_events where repo_name='{repo_full_name}' and type='DeleteEvent' and payload_ref='{branch}' and created_at > '{pr_close_time}' ORDER BY created_at ASC LIMIT 1"
     data = select_one(sql)
     return data
 
@@ -55,7 +54,7 @@ def get_delete_branch_event(repo: str, branch: str, pr_close_time: datetime) -> 
 '''
 功能：搜索当前PR关联的head仓中特定branch的创建&删除事件
 '''
-def get_branch_event(pr_attributes: Dict) -> List:
+def get_branch_event(repo: str, pr_attributes: Dict) -> List:
     head_repo_full_name = pr_attributes['head_repo_full_name']
     head_ref = pr_attributes['head_ref']
     pr_open_time = pr_attributes['created_at']
@@ -63,8 +62,8 @@ def get_branch_event(pr_attributes: Dict) -> List:
     branch_events = []
     # 搜索CreateEvent, DeleteEvent
     if (not pd.isna(head_repo_full_name)) and (not pd.isna(head_ref)):
-        create_event = get_create_branch_event(head_repo_full_name, head_ref, pr_open_time)
-        delete_event = get_delete_branch_event(head_repo_full_name, head_ref, pr_close_time)
+        create_event = get_create_branch_event(repo, head_repo_full_name, head_ref, pr_open_time)
+        delete_event = get_delete_branch_event(repo, head_repo_full_name, head_ref, pr_close_time)
         if not pd.isna(create_event):
             branch_events.append(create_event)
         if not pd.isna(delete_event):
@@ -75,14 +74,14 @@ def get_branch_event(pr_attributes: Dict) -> List:
 '''
 功能：搜索当前PR关联的fork仓的fork事件（前提是当前PR来自fork仓）
 '''
-def get_fork_event(repo: str, pr_attributes: Dict) -> Dict:
+def get_fork_event(owner: str, repo: str, pr_attributes: Dict) -> Dict:
     head_repo_fork = pr_attributes['head_repo_fork']
     head_repo_full_name = pr_attributes['head_repo_full_name']
     pr_open_time = pr_attributes['created_at']
     # 如果是fork仓，则搜索ForkEvent
     fork_event = None
     if (not pd.isna(head_repo_fork)) and head_repo_fork and (not pd.isna(head_repo_full_name)):
-        sql = f"select * from events where repo_name='{repo}' and type='ForkEvent' and payload_forkee_full_name='{head_repo_full_name}' and created_at < '{pr_open_time}' ORDER BY created_at DESC LIMIT 1"
+        sql = f"select * from {repo}_events where repo_name='{owner}/{repo}' and type='ForkEvent' and payload_forkee_full_name='{head_repo_full_name}' and created_at < '{pr_open_time}' ORDER BY created_at DESC LIMIT 1"
         fork_event = select_one(sql)
     return fork_event
 
@@ -107,7 +106,7 @@ def get_first_commit_time(commit_content: str) -> datetime:
 '''
 功能：从events表中提取特定时间段的PushEvent(PR中包含的第一个commit的提交时间 <= PushEvent <= PR关闭的时间)
 '''
-def get_push_event(pr_attributes: dict) -> List:
+def get_push_event(repo: str, pr_attributes: dict) -> List:
     # 条件一:PushEvent的时间段
     start_time = get_first_commit_time(pr_attributes['commit_content'])
     end_time = pr_attributes['closed_at']
@@ -120,7 +119,7 @@ def get_push_event(pr_attributes: dict) -> List:
     if pd.isna(head_repo_full_name) or pd.isna(head_ref):
         return []
     # 根据上述条件查询PushEvent
-    sql = f"""select * from events 
+    sql = f"""select * from {repo}_events 
                 where repo_name='{head_repo_full_name}' 
                 and type='PushEvent' 
                 and (payload_ref='{head_ref}' or payload_ref='refs/heads/{head_ref}'
@@ -133,8 +132,8 @@ def get_push_event(pr_attributes: dict) -> List:
 '''
 功能：从events表中提取特定PR(pr_number)的相关事件
 '''
-def get_pr_events(repo: str, pr_number: int) -> List:
-    sql = f"select * from events where repo_name='{repo}' and payload_pr_number={pr_number} and (type='PullRequestEvent' OR type='PullRequestReviewEvent' OR type='PullRequestReviewCommentEvent')"
+def get_pr_events(owner: str, repo: str, pr_number: int) -> List:
+    sql = f"select * from {repo}_events where repo_name='{owner}/{repo}' and payload_pr_number={pr_number} and (type='PullRequestEvent' OR type='PullRequestReviewEvent' OR type='PullRequestReviewCommentEvent')"
     data = select_all(sql)
     return data
 
@@ -142,26 +141,25 @@ def get_pr_events(repo: str, pr_number: int) -> List:
 '''
 功能：从events中提取特定仓库的特定PR的关联事件
 '''
-def search_pr_events(repo: str, pr_number: int, pr_attributes: dict) -> List:
+def search_pr_events(owner: str, repo: str, pr_number: int, pr_attributes: dict) -> List:
     # 存储一次完整PR涉及的事件集合
     pr_events = []
     # 1.从events表中提取ForkEvent
-    fork_event = get_fork_event(repo, pr_attributes)
+    fork_event = get_fork_event(owner, repo, pr_attributes)
     if not pd.isna(fork_event):
         pr_events.append(fork_event)
     # 2.从events表中提取BranchEvent(CreateEvent,DeleteEvent)
-    branch_events = get_branch_event(pr_attributes)
+    branch_events = get_branch_event(repo, pr_attributes)
     pr_events.extend(branch_events)
     # 3.从events表中提取PushEvent
-    push_events = get_push_event(pr_attributes)
+    push_events = get_push_event(repo, pr_attributes)
     pr_events.extend(push_events)
     # 4.从events表中提取PR相关事件: PullRequestEvent、PullRequestReviewEvent、PullRequestReviewCommentEvent、IssueCommentEvent
-    events = get_pr_events(repo, pr_number)
+    events = get_pr_events(owner, repo, pr_number)
     pr_events.extend(events)
     # 5.保存为中间文件temp_data
     df = pd.DataFrame(data=pr_events)
-    shortname = repo[repo.index('/') + 1:]
-    filepath = f"{TEMP_DATA_DIR}/{shortname}.csv"
+    filepath = f"{TEMP_DATA_DIR}/{repo}.csv"
     header = not os.path.exists(filepath)
     df.to_csv(filepath, header=header, index=False, mode='a')
     return pr_events
@@ -220,8 +218,7 @@ def process_pr_events(pr_events: List, pr_state: bool, pr_number: int, filepath:
 功能：根据PR的类型，选择不同的文件路径保存
 '''
 def get_filepath(repo: str, pr_state: bool, is_fork: bool) -> str:
-    shortname = repo[repo.index('/') + 1:]
-    filepath = f"{EVENT_LOG_DIR}/{shortname}"
+    filepath = f"{EVENT_LOG_DIR}/{repo}"
     if is_fork and pr_state:
         filepath = filepath + "_fork_merge.csv"
     elif is_fork and (not pr_state):
@@ -236,14 +233,14 @@ def get_filepath(repo: str, pr_state: bool, is_fork: bool) -> str:
 '''
 功能：全流程自动化
 '''
-def auto_process(repo: str, pr_number: int):
+def auto_process(owner: str, repo: str, pr_number: int):
     # 1.获取PR所有属性
     pr_attributes = get_pr_attributes(repo, pr_number)
     if pr_attributes is None:
         print(f"PR#{pr_number},数据库中没有查询到PR信息")
         return
     # 2.搜索PR所有关联事件
-    pr_events = search_pr_events(repo, pr_number, pr_attributes)
+    pr_events = search_pr_events(owner, repo, pr_number, pr_attributes)
     pr_state = pr_attributes['merged']
     is_fork = pr_attributes['head_repo_fork']
     # 3.剔除无效PR(没有明确的合入状态或fork信息)
@@ -263,26 +260,25 @@ def auto_process(repo: str, pr_number: int):
 功能：获取特定时间段内的所有pr_number
 '''
 def get_all_pr_number_between(repo: str, start: datetime, end: datetime) -> List:
-    shortname = repo[repo.index('/') + 1:]
-    table = f"{shortname}_self"
+    table = f"{repo}_self"
     start_time = start.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end.strftime('%Y-%m-%d %H:%M:%S')
     sql = f"select pr_number from {table} where created_at >= '{start_time}' and created_at < '{end_time}'"
-    data = select_all(sql)
-    return data
+    pr_list = select_all(sql)
+    pr_number_list = [x['pr_number'] for x in pr_list]
+    return pr_number_list
 
 
 if __name__ == '__main__':
-    repo = "tensorflow/tensorflow"
-    start = datetime(2021, 6, 1)
+    owner = "apache"
+    repo = "dubbo"
+    start = datetime(2021, 1, 1)
     end = datetime(2021, 7, 1)
-    pr_list = get_all_pr_number_between(repo, start, end)
-    total = len(pr_list)
+    pr_number_list = get_all_pr_number_between(repo, start, end)
+    total = len(pr_number_list)
     index = 1
-    for pr in pr_list:
-        pr_number = pr['pr_number']
-        if pr_number > 50342:
-            auto_process(repo, pr_number)
+    for pr_number in pr_number_list:
+        auto_process(owner, repo, pr_number)
         print(f"{index}/{total}")
         index += 1
     # auto_process(repo, 50323)

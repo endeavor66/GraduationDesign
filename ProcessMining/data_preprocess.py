@@ -86,6 +86,19 @@ def data_preprocess(repo: str):
         print(f"{filename} process done\n")
 
 
+def valid(repo: str):
+    t = FILE_TYPES[0]
+    filename = f"{repo}_{t}.csv"
+    input_path = f"{INPUT_DATA_DIR}/{filename}"
+    df = pd.read_csv(input_path, parse_dates=['StartTimestamp'], infer_datetime_format=True)
+    for name, group in df.groupby('CaseID'):
+        create_event = group.loc[group['Activity'] == 'CreateBranch']
+        openPR_event = group.loc[group['Activity'] == 'OpenPR']
+        if create_event.shape[0] > 0 and openPR_event.shape[0] > 0 and create_event.iloc[0, 3] > openPR_event.iloc[0, 3]:
+            print(f"pr_number#{name} 异常, CreateBranch: {create_event.iloc[0, 3]}, openPR: {openPR_event.iloc[0, 3]}")
+
+
 if __name__ == '__main__':
-    repo = "tensorflow"
+    repo = "dubbo"
     data_preprocess(repo)
+    # valid(repo)

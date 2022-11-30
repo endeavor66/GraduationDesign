@@ -2,8 +2,7 @@ import pymysql
 from utils.access_key import get_mysql_root_psw
 from utils.exception_handdle import write_file
 
-TABLE_FIELDS = {
-    "events": [
+EVENT_TABLE_FIELDS = [
         "id",
         "type",
         "public",
@@ -29,7 +28,7 @@ TABLE_FIELDS = {
         "payload_member_login",
         "payload_member_type",
         "payload_member_site_admin"]
-}
+
 
 # 获取数据库连接对象
 username, password = get_mysql_root_psw()
@@ -45,20 +44,21 @@ conn = pymysql.connect(host='127.0.0.1', port=3306, user=username, password=pass
 输出
     控制台打印过程信息，如：执行的SQL，SQL执行后的影响行数，SQL执行异常
 """
-def insert_batch(table, datas, repo):
-    if table not in TABLE_FIELDS:
-        print("不存在%s的字段信息" % table)
-        return
-    fields = ",".join(TABLE_FIELDS[table])
-    fields_param = ("%s," * len(TABLE_FIELDS[table]))[0:-1]
+def insert_batch(repo, datas):
+    table = f"{repo}_events"
+    fields = ",".join(EVENT_TABLE_FIELDS)
+    fields_param = ("%s," * len(EVENT_TABLE_FIELDS))[0:-1]
     sql = "insert into " + table + "(" + fields + ")" + " values " + "(" + fields_param + ")"
     # print("执行SQL: " + sql)
 
+    cursor = conn.cursor()
     try:
-        cursor = conn.cursor()
         conn.ping(reconnect=True)
         result = cursor.executemany(sql, datas)
         conn.commit()
+        cursor.close()
+        # 如果在一次程序运行过程中多次调用该函数，可能会出问题，conn.close()关闭后后续可能无法获取连接
+        # conn.close()
         print("操作成功，插入%d条数据" % result)
     except Exception as e:
         conn.rollback()

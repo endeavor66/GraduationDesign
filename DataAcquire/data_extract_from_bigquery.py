@@ -32,9 +32,10 @@ def check(v):
 '''
 功能：从csv文件(文件路径为filepath)中提取所有事件，保存到数据库
 '''
-def extract_data_from_bigquery_csv(filepath: str):
-    # 1.从csv文件中筛选出repo所有相关事件
+def extract_data_from_bigquery_csv(filepath: str, repo: str):
+    # 1.从csv文件中筛选出repo及其fork仓的所有相关事件(形式: repo_name like '%/repo')
     df = pd.read_csv(filepath)
+    df = df.loc[df.repo_name.str.endswith(repo)]
     df2 = df.drop_duplicates()
     print(f"{filepath}去除重复数据:%d, 剩余数据:%d" % ((df.shape[0] - df2.shape[0]), df2.shape[0]))
     # 2.提取关键活动
@@ -68,15 +69,15 @@ def extract_data_from_bigquery_csv(filepath: str):
              )
         datas.append(t)
     # 3.保存到数据库
-    insert_batch("events", datas, repo[repo.index('/') + 1:])
+    insert_batch(repo, datas)
 
 
 if __name__ == '__main__':
-    repo = "tensorflow/tensorflow"
+    repo = "dubbo"
     from datetime import datetime, timedelta
     import os
-    start = datetime(2021, 2, 1)  # 年，月，日，时，分，秒 其中年，月，日是必须的
-    end = datetime(2022, 3, 1)
+    start = datetime(2021, 1, 1)  # 年，月，日，时，分，秒 其中年，月，日是必须的
+    end = datetime(2021, 7, 1)
     index = 0
     while start < end:
         cur = start.strftime("%Y%m%d")
@@ -85,7 +86,7 @@ if __name__ == '__main__':
             print(f"{filepath} does not exist")
             start = start + timedelta(days=1)
             continue
-        extract_data_from_bigquery_csv(filepath)
+        extract_data_from_bigquery_csv(filepath, repo)
         print(f"{filepath} process done")
         start = start + timedelta(days=1)
         index += 1
