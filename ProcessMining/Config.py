@@ -7,12 +7,16 @@ FILE_TYPES = ["fork_merge", "fork_close", "unfork_merge", "unfork_close"]
 EVENT_LOG_DIR = "../DataAcquire/event_log_data"
 PROCESS_DATA_DIR = "process_data"
 PROCESS_TEMP_DATA_DIR = f"{PROCESS_DATA_DIR}/temp"
+ROLE_INFO_DIR = f"{PROCESS_DATA_DIR}/role_info"
+ROLE_CHANGE_DIR = f"{PROCESS_DATA_DIR}/role_change"
 INPUT_DATA_DIR = "input_data"
 OUTPUT_DATA_DIR = "output_data"
 
 # 创建不存在的目录
 create_dir_if_not_exist(PROCESS_DATA_DIR)
 create_dir_if_not_exist(PROCESS_TEMP_DATA_DIR)
+create_dir_if_not_exist(ROLE_INFO_DIR)
+create_dir_if_not_exist(ROLE_CHANGE_DIR)
 create_dir_if_not_exist(OUTPUT_DATA_DIR)
 
 

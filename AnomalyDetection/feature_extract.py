@@ -52,7 +52,7 @@ def cal_review_response_time(created_at: datetime, closed_at: datetime, review_c
 '''
 def cal_changed_file_type(repo: str, pr_number: int):
     table = f"{repo}_file"
-    sql = f"select changed_file_name from {table} where pr_number={pr_number}"
+    sql = f"select changed_file_name from `{table}` where pr_number={pr_number}"
     file_list = select_all(sql)
     file_type = set()
     for file in file_list:
@@ -72,7 +72,7 @@ def cal_changed_file_type(repo: str, pr_number: int):
 def feature_extract(repo: str):
     # 从repo_self表中查询特定时间段的PR信息
     table = f"{repo}_self"
-    sql = f"select * from {table} where created_at >= '2021-01-01 00:00:00' and created_at < '2021-02-01 00:00:00'"
+    sql = f"select * from `{table}` where created_at >= '2021-01-01 00:00:00' and created_at < '2021-02-01 00:00:00'"
     data = select_all(sql)
 
     # 借助pandas对PR集合进行分析

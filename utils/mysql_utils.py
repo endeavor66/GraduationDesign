@@ -48,7 +48,7 @@ def insert_batch(repo, datas):
     table = f"{repo}_events"
     fields = ",".join(EVENT_TABLE_FIELDS)
     fields_param = ("%s," * len(EVENT_TABLE_FIELDS))[0:-1]
-    sql = "insert into " + table + "(" + fields + ")" + " values " + "(" + fields_param + ")"
+    sql = f"insert into `{table}` ({fields}) values({fields_param})"
     # print("执行SQL: " + sql)
 
     cursor = conn.cursor()

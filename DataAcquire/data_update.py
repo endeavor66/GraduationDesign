@@ -16,7 +16,7 @@ headers = {'Authorization': 'token ' + access_token}
 
 # 查询特定仓库中(repo_self)所有pr_number
 def get_all_pr(repo: str):
-    sql = f"select pr_number from {repo}_self"
+    sql = f"select pr_number from `{repo}_self`"
     data = select_all(sql)
     return data
 
@@ -42,7 +42,7 @@ def data_update(owner:str, repo: str, exception_filename: str):
             base_repo_fork = pr_json_str["base"]["repo"]["fork"] if pr_json_str["base"]["repo"] is not None else None
             # 执行更新操作
             try:
-                update_sql = """update """ + table + """ set 
+                update_sql = """update `""" + table + """` set 
                         head_ref=%s, 
                         head_repo_full_name=%s,
                         head_repo_fork=%s,
