@@ -35,7 +35,9 @@ def cal_time_delta(start: datetime, end: datetime):
     return delta_hours
 
 
-# 计算评审响应时间，单位hours
+'''
+计算评审响应时间，单位hours
+'''
 def cal_review_response_time(created_at: datetime, closed_at: datetime, review_comments_content: str):
     if pd.isna(review_comments_content):
         return None

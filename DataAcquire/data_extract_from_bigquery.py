@@ -73,7 +73,7 @@ def extract_data_from_bigquery_csv(filepath: str, repo: str):
 
 
 if __name__ == '__main__':
-    repo = "opencv"
+    repo = "zipkin"
     from datetime import datetime, timedelta
     import os
     start = datetime(2021, 1, 1)  # 年，月，日，时，分，秒 其中年，月，日是必须的

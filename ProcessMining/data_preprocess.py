@@ -56,7 +56,7 @@ def load_data(filepath: str) -> pd.DataFrame:
                                        activity_key='Activity',
                                        timestamp_key='StartTimestamp')
     # 添加角色列
-    # event_log['Role'] = event_log['Activity'].apply(lambda x: cal_role(x))
+    event_log['Role'] = event_log['Activity'].apply(lambda x: cal_role(x))
     # 删除重复列
     event_log.drop(columns=['CaseID', 'Activity', 'StartTimestamp'], inplace=True)
     # 重新组织列的次序
@@ -76,16 +76,16 @@ def log_info(log: pd.DataFrame):
 功能：事件日志数据预处理：加载事件日志、剔除无效案例，结果保存在 process_data 目录中
 '''
 def data_preprocess(repo: str):
+    all_scene_output_path = f"{LOG_ALL_SCENE_DIR}/{repo}.csv"
+    df_all_scene = pd.DataFrame()
     for t in FILE_TYPES:
         # 初始化参数
         filename = f"{repo}_{t}.csv"
         input_path = f"{INPUT_DATA_DIR}/{filename}"
-        output_path = f"{PROCESS_DATA_DIR}/{filename}"
+        output_path = f"{LOG_SINGLE_SCENE_DIR}/{filename}"
 
         # 加载事件日志
         log = load_data(input_path)
-        temp_path = f"{PROCESS_TEMP_DATA_DIR}/temp-{filename}"
-        log.to_csv(temp_path, header=True, index=False)
         print("total case: %d" % len(log['case:concept:name'].unique()))
 
         # 剔除无效案例
@@ -105,9 +105,19 @@ def data_preprocess(repo: str):
         print("filter_event_attribute_values (ClosePR, MergePR)")
         log_info(log)
 
+        # 过滤包含低频行为(ReopenPR, PRReviewDismiss)的案例
+        log = pm4py.filter_event_attribute_values(log, 'concept:name', ['ReopenPR', 'PRReviewDismiss'], level="case", retain=False)
+        print("filter_event_attribute_values (ReopenPR, PRReviewDismiss)")
+        log_info(log)
+
         # 保存文件
         log.to_csv(output_path, header=True, index=False)
         print(f"{filename} process done\n")
+
+        # 添加到全场景
+        df_all_scene = pd.concat([df_all_scene, log], ignore_index=True)
+
+    df_all_scene.to_csv(all_scene_output_path, index=False, header=True)
 
 
 def valid(repo: str):

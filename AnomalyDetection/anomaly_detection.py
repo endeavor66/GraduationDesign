@@ -42,8 +42,9 @@ def LOF(data: List[Union[int, float]], x: Union[int, float]) -> bool:
     return y == -1
 
 
-repo = "tensorflow"
-log_path = f"../ProcessMining/process_data/{repo}.csv"
-log = pd.read_csv(log_path, parse_dates=['StartTimestamp', 'time:timestamp'], infer_datetime_format=True)
-all_case_durations = pm4py.get_all_case_durations(log)
-boxplot(all_case_durations, 100)
+if __name__ == '__main__':
+    repo = "tensorflow"
+    log_path = f"../ProcessMining/process_data/{repo}.csv"
+    log = pd.read_csv(log_path, parse_dates=['StartTimestamp', 'time:timestamp'], infer_datetime_format=True)
+    all_case_durations = pm4py.get_all_case_durations(log)
+    boxplot(all_case_durations, 100)

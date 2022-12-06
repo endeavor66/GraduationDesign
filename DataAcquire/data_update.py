@@ -73,8 +73,9 @@ def data_update(owner:str, repo: str, exception_filename: str):
 
 
 if __name__ == '__main__':
-    owner = 'tensorflow'
-    repo = 'tensorflow'
+    # phoenixframework/phoenix
+    owner = 'phoenixframework'
+    repo = 'phoenix'
     exception_filename = repo + '_exception.csv'
     data_update(owner, repo, exception_filename)
 

@@ -5,6 +5,7 @@ FILE_TYPES = ["fork_merge", "fork_close", "unfork_merge", "unfork_close"]
 
 # 文件路径
 FEATURE_DIR = "feature"
+LOG_ALL_SCENE_DIR = "../ProcessMining/process_data/log_all_scene"
 
 # 创建不存在的目录
 create_dir_if_not_exist(FEATURE_DIR)

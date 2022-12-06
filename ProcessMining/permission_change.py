@@ -16,7 +16,7 @@ def get_pr_attributes(repo: str, pr_number: int) -> (datetime, datetime):
 
 '''
 功能：为不同用户添加角色, 用户在PR中只有一个特定的角色(maintainer, reviewer, committer)
-规则：
+角色判定规则：
 1、maintainer：MergePR、PRReviewDismiss、OpenPR和ClosePR不是同一个人(因为committer也可以ClosePR)
 2、reviewer：明确给出了评审意见(PRReviewApprove, PRReviewReject)，或者只做过PRReviewComment(因为committer也可以PRReviewComment)
 3、committer：{"ForkRepository", "CreateBranch", "DeleteBranch", "SubmitCommit", "Revise", "OpenPR"}
@@ -100,7 +100,6 @@ def permission_change(repo: str):
         'change_pr_number', 'change_role', 'change_pr_open_time'
     ])
     df_file.to_csv(output_path, index=False, header=True)
-
 
 
 if __name__ == '__main__':
