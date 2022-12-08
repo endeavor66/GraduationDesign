@@ -1,6 +1,6 @@
 import pandas as pd
 import json
-from utils.mysql_utils import insert_batch
+from utils.mysql_utils import batch_insert_into_events
 
 
 '''
@@ -69,7 +69,7 @@ def extract_data_from_bigquery_csv(filepath: str, repo: str):
              )
         datas.append(t)
     # 3.保存到数据库
-    insert_batch(repo, datas)
+    batch_insert_into_events(repo, datas)
 
 
 if __name__ == '__main__':

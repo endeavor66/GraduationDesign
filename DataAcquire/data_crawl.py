@@ -1,5 +1,5 @@
 from utils.gharchive_utils import get_client, join_commits_sha
-from utils.mysql_utils import insert_batch
+from utils.mysql_utils import batch_insert_into_events
 from datetime import datetime, timedelta
 
 
@@ -48,7 +48,7 @@ def crawl_data(repo: str, start_time: datetime, end_time: datetime):
                  )
             datas.append(t)
         # 3.保存到数据库
-        insert_batch("events", datas, repo[repo.index('/') + 1:])
+        batch_insert_into_events(repo, datas)
         del archive
         del datas
         # 4.更新新一轮的时间段

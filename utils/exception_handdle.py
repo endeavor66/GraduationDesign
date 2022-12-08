@@ -9,7 +9,7 @@ def write_file(exception, filename):
     # print(current_path)
     filepath = current_path + filename  # 在当前路径创建名为test的文本文件
     now_time = time.strftime('%Y-%m-%d %H:%M:%S ', time.localtime(time.time()))  # 获取当前时间
-    context = now_time + ', ' + exception + "\n"
+    context = now_time + ', ' + exception
     print(context)
 
     with open(filepath, 'a+') as writer:

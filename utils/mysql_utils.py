@@ -1,4 +1,5 @@
 import pymysql
+from typing import List
 from utils.access_key import get_mysql_root_psw
 from utils.exception_handdle import write_file
 
@@ -28,7 +29,20 @@ EVENT_TABLE_FIELDS = [
         "payload_member_login",
         "payload_member_type",
         "payload_member_site_admin"]
-
+COMMIT_TABLE_FIELDS = [
+    "pr_number",
+    "sha",
+    "author",
+    "author_email",
+    "author_date",
+    "committer",
+    "committer_email",
+    "committer_date",
+    "message",
+    "line_addition",
+    "line_deletion",
+    "file_edit_num",
+    "file_content"]
 
 # 获取数据库连接对象
 username, password = get_mysql_root_psw()
@@ -36,15 +50,9 @@ conn = pymysql.connect(host='127.0.0.1', port=3306, user=username, password=pass
 
 
 """
-功能：批量插入数据
-输入
-    table: 操作的表名，必须为TABLE_FIELDS的键
-    datas: 待插入的数据，格式: List中数据类型必须为Tuple元组, eg.[(0, 3132), (1, 1298)]
-    project: 操作的项目，操作异常信息将记录在对于"exception_data/project_exception.csv文件中"
-输出
-    控制台打印过程信息，如：执行的SQL，SQL执行后的影响行数，SQL执行异常
+功能：批量插入到repo_events表中
 """
-def insert_batch(repo, datas):
+def batch_insert_into_events(repo: str, data: List):
     table = f"{repo}_events"
     fields = ",".join(EVENT_TABLE_FIELDS)
     fields_param = ("%s," * len(EVENT_TABLE_FIELDS))[0:-1]
@@ -54,7 +62,7 @@ def insert_batch(repo, datas):
     cursor = conn.cursor()
     try:
         conn.ping(reconnect=True)
-        result = cursor.executemany(sql, datas)
+        result = cursor.executemany(sql, data)
         conn.commit()
         cursor.close()
         # 如果在一次程序运行过程中多次调用该函数，可能会出问题，conn.close()关闭后后续可能无法获取连接
@@ -66,6 +74,33 @@ def insert_batch(repo, datas):
         conn.close()
         print("数据库执行出错:" + str(e))
         write_file(exception=str(e), filename=repo + "_exception.csv")
+
+
+'''
+功能：插入一条记录到repo_commit表中
+'''
+def insert_into_commit(repo: str, data: List):
+    table = f"{repo}_commit"
+    fields = ",".join(COMMIT_TABLE_FIELDS)
+    fields_param = ("%s," * len(COMMIT_TABLE_FIELDS))[0:-1]
+    sql = f"insert into `{table}` ({fields}) values({fields_param})"
+    # print("执行SQL: " + sql)
+
+    cursor = conn.cursor()
+    result = 0
+    try:
+        conn.ping(reconnect=True)
+        result = cursor.execute(sql, data)
+        conn.commit()
+        cursor.close()
+        # 如果在一次程序运行过程中多次调用该函数，可能会出问题，conn.close()关闭后后续可能无法获取连接
+        # conn.close()
+    except Exception as e:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        write_file(exception=str(e), filename=repo + "_exception.csv")
+    return result
 
 
 """

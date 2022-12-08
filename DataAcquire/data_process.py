@@ -10,7 +10,7 @@ from DataAcquire.Config import *
 '''
 功能：获取特定PR(pr_number)的创建和关闭时间(created_at, closed_at)
 '''
-def get_pr_attributes(repo: str, pr_number: int) -> (datetime, datetime):
+def get_pr_attributes(repo: str, pr_number: int) -> Dict:
     sql = f"select * from `{repo}_self` where repo_name='{repo}' and pr_number={pr_number}"
     data = select_one(sql)
     return data

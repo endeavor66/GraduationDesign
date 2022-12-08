@@ -108,6 +108,18 @@ def cal_average_review_response_time(review_comment_list: List):
 
 
 '''
+功能：获取特定时间段内的所有pr_number
+'''
+def get_all_pr_number_between(repo: str, start: datetime, end: datetime) -> List:
+    start_time = start.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end.strftime('%Y-%m-%d %H:%M:%S')
+    sql = f"select pr_number from `{repo}_self` where created_at >= '{start_time}' and created_at < '{end_time}'"
+    pr_list = select_all(sql)
+    pr_number_list = [x['pr_number'] for x in pr_list]
+    return pr_number_list
+
+
+'''
 功能：根据传入的评审活动，判断是否同意合入
 '''
 def is_approve(activity: str):
@@ -119,10 +131,11 @@ def is_approve(activity: str):
 
 
 # 计算每个reviewer的评审通过率
-def cal_review_approve_rate(repo: str):
+def cal_review_approve_rate(repo: str, pr_number_list: List):
     review_events = ['PRReviewApprove', 'PRReviewReject', 'PRReviewComment']
     input_path = f"{LOG_ALL_SCENE_DIR}/{repo}.csv"
     df = pd.read_csv(input_path)
+    df = df.loc[df['case:concept:name'].isin(pr_number_list)]
 
     # 计算评审通过率
     approve_rate_list = []
@@ -146,8 +159,11 @@ def cal_reviewer_feature(repo: str, start: datetime, end: datetime, output_path:
     # 3.计算每个评审者的平均首次评审响应时间
     avg_response_time_list = cal_average_review_response_time(review_comment_list)
 
+    # 4.从repo_self表中提取指定时间段的所有pr_number
+    pr_number_list = get_all_pr_number_between(repo, start, end)
+
     # 4.计算每个评审者的评审通过率
-    approve_rate_list = cal_review_approve_rate(repo)
+    approve_rate_list = cal_review_approve_rate(repo, pr_number_list)
 
     # 5.合并上述所有特征，关联值为reviewer
     df1 = pd.DataFrame(data=avg_review_comment_length_list, columns=['people', 'avg_review_comment_length'])

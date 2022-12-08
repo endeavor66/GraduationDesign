@@ -23,7 +23,7 @@ def cal_time_delta_hours(start: datetime, end: datetime):
 
 
 '''
-功能：计算时间差，单位hours
+功能：计算时间差，单位minutes
 '''
 def cal_time_delta_minutes(start: datetime, end: datetime):
     if pd.isna(start) or pd.isna(end):
