@@ -13,6 +13,9 @@ access_token = get_token()
 headers = {'Authorization': 'token ' + access_token}
 
 
+'''
+功能：将对象数组转为json字符串保存
+'''
 def list_to_json(temp_list: List):
     dic = {}
     for i in range(0, len(temp_list)):
@@ -20,6 +23,9 @@ def list_to_json(temp_list: List):
     return json.dumps(dic)
 
 
+'''
+功能：借助GitHub Commit Api爬取commit数据，并保存到数据库
+'''
 def crawl_commit(owner: str, repo: str, pr_number: int, commit_sha_list: List):
     for sha in commit_sha_list:
         url = f"https://api.github.com/repos/{owner}/{repo}/commits/{sha}"
@@ -30,15 +36,15 @@ def crawl_commit(owner: str, repo: str, pr_number: int, commit_sha_list: List):
             commit = response.json()
             author, author_email, author_date, committer, committer_email, committer_date, message = None, None, None, None, None, None, None
             # 从中提取需要的属性，写入到数据库
-            if not pd.isna(commit['author']):
+            if not pd.isna(commit['author']) and len(commit['author']) > 0:
                 author = commit['author']['login']
-                author_date = time_reverse(commit['commit']['author']['date'])
-            if not pd.isna(commit['committer']):
+            if not pd.isna(commit['committer']) and len(commit['committer']) > 0:
                 committer = commit['committer']['login']
-                committer_date = commit['commit']['committer']['date']
-            if not pd.isna(commit['commit']):
+            if not pd.isna(commit['commit']) and len(commit['commit']) > 0:
                 message = commit['commit']['message']
+                author_date = time_reverse(commit['commit']['author']['date'])
                 author_email = commit['commit']['author']['email'] if not pd.isna(commit['commit']['author']) else None
+                committer_date = commit['commit']['committer']['date']
                 committer_email = time_reverse(commit['commit']['committer']['email']) if not pd.isna(commit['commit']['committer']) else None
             line_addition = commit['stats']['additions']
             line_deletion = commit['stats']['deletions']
@@ -95,7 +101,7 @@ def crawl_commit_between(owner: str, repo: str, start: datetime, end: datetime):
     df = pd.DataFrame(data)
     for index, row in df.iterrows():
         pr_number = row['pr_number']
-        # if pr_number <= 47247:
+        # if pr_number <= 50318:
         #     print(f"pr#{pr_number} process done")
         #     continue
         commit_content = row['commit_content']
@@ -107,8 +113,10 @@ def crawl_commit_between(owner: str, repo: str, start: datetime, end: datetime):
 
 
 if __name__ == '__main__':
-    owner = 'tensorflow'
-    repo = 'tensorflow'
-    start = datetime(2021, 5, 1)
-    end = datetime(2021, 6, 1)
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix']
+
+    owner = 'opencv'
+    repo = 'opencv'
+    start = datetime(2021, 2, 1)
+    end = datetime(2021, 7, 1)
     crawl_commit_between(owner, repo, start, end)

@@ -3,20 +3,9 @@ import numpy as np
 from typing import List, Dict
 from datetime import datetime
 from AnomalyDetection.Config import *
-from utils.mysql_utils import select_all, select_one
+from utils.mysql_utils import select_all
 from utils.time_utils import cal_time_delta_minutes
-
-
-'''
-功能：获取特定时间段内的所有pr_number
-'''
-def get_all_pr_number_between(repo: str, start: datetime, end: datetime) -> List:
-    start_time = start.strftime('%Y-%m-%d %H:%M:%S')
-    end_time = end.strftime('%Y-%m-%d %H:%M:%S')
-    sql = f"select pr_number from `{repo}_self` where created_at >= '{start_time}' and created_at < '{end_time}'"
-    pr_list = select_all(sql)
-    pr_number_list = [x['pr_number'] for x in pr_list]
-    return pr_number_list
+from utils.pr_self_utils import get_pr_attributes, get_all_pr_number_between
 
 
 '''
@@ -32,15 +21,6 @@ def get_commit_of_pr_number(repo: str, pr_number_list: List):
 
 
 '''
-功能：获取PR的所有属性
-'''
-def get_pr_attributes(repo: str, pr_number: int) -> Dict:
-    sql = f"select * from `{repo}_self` where repo_name='{repo}' and pr_number={pr_number}"
-    data = select_one(sql)
-    return data
-
-
-'''
 功能：计算平均时间间隔
 '''
 def cal_commit_interval(commit_date: List):
@@ -49,6 +29,8 @@ def cal_commit_interval(commit_date: List):
     for i in range(1, len(commit_date)):
         inv = cal_time_delta_minutes(commit_date[i-1], commit_date[i])
         interval.append(inv)
+    if len(interval) == 0:
+        return 0
     return np.nanmean(interval)
 
 
@@ -64,7 +46,7 @@ def cal_committer_feature(repo: str, start: datetime, end: datetime, output_path
     # 从commit_list中提取committer相关指标
     df = pd.DataFrame(commit_list)
     committer_feature = []
-    for person, group in df.groupby('people'):
+    for person, group in df.groupby('author'):
         # 计算一段时间内，committer提交的commit数量, 添加的代码行总数, 删除的代码行总数, 变动的文件数量
         commit_num = group.shape[0]
         line_addition = group['line_addition'].sum()
@@ -80,14 +62,15 @@ def cal_committer_feature(repo: str, start: datetime, end: datetime, output_path
 
         # 计算一段时间内，committer提交commit的频率(平均时间间隔)
         commit_date = group['committer_date'].tolist()
-        avg_commit_interval = cal_commit_interval(commit_date)
+        commit_interval = cal_commit_interval(commit_date)
 
         # 保存所有特征
-        data = [person, commit_num, line_addition, line_deletion, file_edit_num, merge_rate, avg_commit_interval]
+        data = [person, commit_num, line_addition, line_deletion, file_edit_num, merge_rate, commit_interval]
         committer_feature.append(data)
 
     # 保存为文件
-    df_file = pd.DataFrame(data=committer_feature)
+    columns = ['person', 'commit_num', 'line_addition', 'line_deletion', 'file_edit_num', 'merge_rate', 'commit_interval']
+    df_file = pd.DataFrame(data=committer_feature, columns=columns)
     df_file.to_csv(output_path, index=False, header=True)
 
 

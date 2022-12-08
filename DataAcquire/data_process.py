@@ -5,6 +5,7 @@ from typing import List, Dict
 from datetime import datetime, timedelta
 from utils.mysql_utils import select_all, select_one
 from utils.time_utils import time_reverse
+from utils.pr_self_utils import get_all_pr_number_between
 from DataAcquire.Config import *
 
 '''
@@ -254,18 +255,6 @@ def auto_process(owner: str, repo: str, pr_number: int):
     filepath = get_filepath(repo, pr_state, is_fork)
     process_pr_events(pr_events, pr_state, pr_number, filepath)
     print(f"PR#{pr_number} process done")
-
-
-'''
-功能：获取特定时间段内的所有pr_number
-'''
-def get_all_pr_number_between(repo: str, start: datetime, end: datetime) -> List:
-    start_time = start.strftime('%Y-%m-%d %H:%M:%S')
-    end_time = end.strftime('%Y-%m-%d %H:%M:%S')
-    sql = f"select pr_number from `{repo}_self` where created_at >= '{start_time}' and created_at < '{end_time}'"
-    pr_list = select_all(sql)
-    pr_number_list = [x['pr_number'] for x in pr_list]
-    return pr_number_list
 
 
 if __name__ == '__main__':

@@ -1,10 +1,10 @@
-import pm4py
 import pandas as pd
 import numpy as np
-from typing import List, Union
 import matplotlib.pyplot as plt
+from typing import List, Union
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
+from AnomalyDetection.Config import *
 
 '''
 功能：基于箱线图来检测x是否为异常点
@@ -23,13 +23,17 @@ def boxplot(data: List[Union[int, float]], x: Union[int, float]) -> bool:
 '''
 功能：基于孤立森林算法来检测x是否为异常点
 '''
-def isolation_forest(data: List[Union[int, float]], x: Union[int, float]) -> bool:
+def isolation_forest(input_path: str, output_path: str):
+    df = pd.read_csv(input_path)
+    data = df.iloc[:, 1:]
     model = IsolationForest(random_state=0)
     model.fit(data)
-    score = model.decision_function(x)
-    anomaly = model.predict(x)
-    # Returns -1 for anomalies/outliers and +1 for inliers.
-    return anomaly
+    score = model.decision_function(data)
+    anomaly = model.predict(data)
+    df['score'] = score
+    df['anomaly'] = anomaly
+
+    return df.to_csv(output_path, index=False, header=True)
 
 
 '''
@@ -44,7 +48,12 @@ def LOF(data: List[Union[int, float]], x: Union[int, float]) -> bool:
 
 if __name__ == '__main__':
     repo = "tensorflow"
-    log_path = f"../ProcessMining/process_data/{repo}.csv"
-    log = pd.read_csv(log_path, parse_dates=['StartTimestamp', 'time:timestamp'], infer_datetime_format=True)
-    all_case_durations = pm4py.get_all_case_durations(log)
-    boxplot(all_case_durations, 100)
+    role = "committer"
+
+    input_path = f"{FEATURE_DIR}/{repo}_{role}_feature.csv"
+
+    # 高维度检测异常值：孤立森林
+    output_path = f"{OUTPUT_DATA_DIR}/{repo}_{role}_isolation_forest.csv"
+    isolation_forest(input_path, output_path)
+
+    # 低纬度分析原因：箱线图
