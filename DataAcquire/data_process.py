@@ -258,8 +258,9 @@ def auto_process(owner: str, repo: str, pr_number: int):
 
 
 if __name__ == '__main__':
-    owner = "apache"
-    repo = "dubbo"
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix']
+    owner = "phoenixframework"
+    repo = "phoenix"
     start = datetime(2021, 1, 1)
     end = datetime(2021, 7, 1)
     pr_number_list = get_all_pr_number_between(repo, start, end)

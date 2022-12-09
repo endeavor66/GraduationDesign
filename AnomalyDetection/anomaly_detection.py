@@ -26,6 +26,7 @@ def boxplot(data: List[Union[int, float]], x: Union[int, float]) -> bool:
 def isolation_forest(input_path: str, output_path: str):
     df = pd.read_csv(input_path)
     data = df.iloc[:, 1:]
+    data.fillna(0, inplace=True)
     model = IsolationForest(random_state=0)
     model.fit(data)
     score = model.decision_function(data)
@@ -46,14 +47,20 @@ def LOF(data: List[Union[int, float]], x: Union[int, float]) -> bool:
     return y == -1
 
 
-if __name__ == '__main__':
-    repo = "tensorflow"
-    role = "committer"
-
+'''
+功能：采用高维度算法检测异常点，低维度算法分析异常点的各个属性是否异常(分析异常原因)
+'''
+def anomaly_detection(repo: str, role: str):
     input_path = f"{FEATURE_DIR}/{repo}_{role}_feature.csv"
 
     # 高维度检测异常值：孤立森林
     output_path = f"{OUTPUT_DATA_DIR}/{repo}_{role}_isolation_forest.csv"
     isolation_forest(input_path, output_path)
 
-    # 低纬度分析原因：箱线图
+    # TODO 低维度分析原因：箱线图
+
+
+if __name__ == '__main__':
+    repo = "dubbo"
+    role = "reviewer"
+    anomaly_detection(repo, role)

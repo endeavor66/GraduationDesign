@@ -81,9 +81,9 @@ def cal_maintainer_feature(maintainer_pr_data: List, output_path: str):
 
 
 if __name__ == '__main__':
-    repo = 'tensorflow'
+    repo = 'dubbo'
     start = datetime(2021, 1, 1)
-    end = datetime(2021, 2, 1)
+    end = datetime(2021, 7, 1)
     input_path = f"{LOG_ALL_SCENE_DIR}/{repo}.csv"
     output_path = f"{FEATURE_DIR}/{repo}_maintainer_feature.csv"
     maintainer_pr_data = cal_maintainer_pr_data(repo, start, end, input_path)

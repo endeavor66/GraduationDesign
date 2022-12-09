@@ -2,6 +2,7 @@ import pandas as pd
 import pm4py
 from ProcessMining.Config import *
 from datetime import datetime
+import os
 
 
 '''
@@ -81,10 +82,13 @@ def data_preprocess(repo: str):
     for t in FILE_TYPES:
         # 初始化参数
         filename = f"{repo}_{t}.csv"
-        input_path = f"{INPUT_DATA_DIR}/{filename}"
+        input_path = f"{EVENT_LOG_DIR}/{filename}"
         output_path = f"{LOG_SINGLE_SCENE_DIR}/{filename}"
 
         # 加载事件日志
+        if not os.path.exists(input_path):
+            print(f"{input_path} don't exist")
+            continue
         log = load_data(input_path)
         print("total case: %d" % len(log['case:concept:name'].unique()))
 
@@ -120,11 +124,14 @@ def data_preprocess(repo: str):
     df_all_scene.to_csv(all_scene_output_path, index=False, header=True)
 
 
+'''
+功能：验证爬取处理后的event log是否有问题（CreateBranch是否会在OpenPR之后发生）
+'''
 def valid(repo: str):
     t = FILE_TYPES[0]
     filename = f"{repo}_{t}.csv"
-    input_path = f"{INPUT_DATA_DIR}/{filename}"
-    df = pd.read_csv(input_path, parse_dates=['StartTimestamp'], infer_datetime_format=True)
+    input_path = f"{EVENT_LOG_DIR}/{filename}"
+    df = pd.read_csv(input_path, parse_dates=['StartTimestamp'])
     for name, group in df.groupby('CaseID'):
         create_event = group.loc[group['Activity'] == 'CreateBranch']
         openPR_event = group.loc[group['Activity'] == 'OpenPR']
@@ -133,6 +140,7 @@ def valid(repo: str):
 
 
 if __name__ == '__main__':
-    repo = "tensorflow"
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix']
+    repo = "phoenix"
     data_preprocess(repo)
     # valid(repo)

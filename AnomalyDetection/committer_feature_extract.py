@@ -1,11 +1,13 @@
 import pandas as pd
 import numpy as np
+import json
 from typing import List, Dict
 from datetime import datetime
 from AnomalyDetection.Config import *
 from utils.mysql_utils import select_all
 from utils.time_utils import cal_time_delta_minutes
 from utils.pr_self_utils import get_pr_attributes, get_all_pr_number_between
+from utils.math_utils import cal_mean
 
 
 '''
@@ -27,11 +29,51 @@ def cal_commit_interval(commit_date: List):
     commit_date.sort()
     interval = []
     for i in range(1, len(commit_date)):
-        inv = cal_time_delta_minutes(commit_date[i-1], commit_date[i])
+        inv = cal_time_delta_minutes(commit_date[i - 1], commit_date[i])
         interval.append(inv)
-    if len(interval) == 0:
-        return 0
-    return np.nanmean(interval)
+    return cal_mean(interval)
+
+
+'''
+功能：计算文件的类型
+'''
+def cal_file_type(filename: str):
+    filetype = filename
+    file_split = filename.split('.')
+    if len(file_split) >= 2:
+        filetype = file_split[-1]
+    else:
+        filetype = file_split[0]
+    return filetype
+
+
+'''
+功能：提取文件相关的特征: 文件添加/删除行数，文件变更种类数，敏感文件变更数量
+'''
+def cal_file_feature(file_content: str):
+    file_list = json.loads(file_content)
+    change_file_type = set()
+
+    sensitive_file_addition = 0
+    sensitive_file_deletion = 0
+    sensitive_file_edit_num = 0
+    for file in file_list.values():
+        filename = file['filename']
+        filetype = cal_file_type(filename)
+        change_file_type.add(filetype)
+        is_sensitive_file = filetype in SENSITIVE_FILE_SUFFIX
+        status = file['status']
+        addition = file['additions']
+        deletion = file['deletions']
+
+        # 敏感文件特征
+        if is_sensitive_file:
+            sensitive_file_addition += addition
+            sensitive_file_deletion += deletion
+            sensitive_file_edit_num += 1
+
+    total_file_edit_type = len(change_file_type)
+    return [total_file_edit_type, sensitive_file_addition, sensitive_file_deletion, sensitive_file_edit_num]
 
 
 '''
@@ -47,11 +89,23 @@ def cal_committer_feature(repo: str, start: datetime, end: datetime, output_path
     df = pd.DataFrame(commit_list)
     committer_feature = []
     for person, group in df.groupby('author'):
-        # 计算一段时间内，committer提交的commit数量, 添加的代码行总数, 删除的代码行总数, 变动的文件数量
+        # 计算一段时间内，committer提交的commit数量, 添加的代码行总数, 删除的代码行总数
         commit_num = group.shape[0]
-        line_addition = group['line_addition'].sum()
-        line_deletion = group['line_deletion'].sum()
-        file_edit_num = group['file_edit_num'].sum()
+        total_line_addition = group['line_addition'].sum()
+        total_line_deletion = group['line_deletion'].sum()
+        total_file_edit_num = group['file_edit_num'].sum()
+
+        # 计算一段时间内，committer变动的敏感文件数量、敏感文件的变动行数(添加、删除)
+        file_feature = []
+        for index, row in group.iterrows():
+            file_content = row['file_content']
+            file_feature.append(cal_file_feature(file_content))
+        columns = ['total_file_edit_type', 'sensitive_file_addition', 'sensitive_file_deletion', 'sensitive_file_edit_num']
+        df_file_feature = pd.DataFrame(data=file_feature, columns=columns)
+        total_file_edit_type = df_file_feature['total_file_edit_type'].sum()
+        sensitive_line_addition = df_file_feature['sensitive_file_addition'].sum()
+        sensitive_line_deletion = df_file_feature['sensitive_file_deletion'].sum()
+        sensitive_file_edit_num = df_file_feature['sensitive_file_edit_num'].sum()
 
         # 计算一段时间内，committer所参与的PR被合入的几率
         pr_state = []
@@ -65,18 +119,24 @@ def cal_committer_feature(repo: str, start: datetime, end: datetime, output_path
         commit_interval = cal_commit_interval(commit_date)
 
         # 保存所有特征
-        data = [person, commit_num, line_addition, line_deletion, file_edit_num, merge_rate, commit_interval]
+        data = [person, commit_num,
+                total_line_addition, total_line_deletion, total_file_edit_num, total_file_edit_type,
+                sensitive_line_addition, sensitive_line_deletion, sensitive_file_edit_num,
+                merge_rate, commit_interval]
         committer_feature.append(data)
 
     # 保存为文件
-    columns = ['person', 'commit_num', 'line_addition', 'line_deletion', 'file_edit_num', 'merge_rate', 'commit_interval']
+    columns = ['person', 'commit_num',
+               'total_line_addition', 'total_line_deletion', 'total_file_edit_num', 'total_file_edit_type',
+               'sensitive_line_addition', 'sensitive_line_deletion', 'sensitive_file_edit_num',
+               'merge_rate', 'commit_interval']
     df_file = pd.DataFrame(data=committer_feature, columns=columns)
     df_file.to_csv(output_path, index=False, header=True)
 
 
 if __name__ == '__main__':
-    repo = 'tensorflow'
+    repo = 'dubbo'
     start = datetime(2021, 1, 1)
-    end = datetime(2021, 2, 1)
+    end = datetime(2021, 7, 1)
     output_path = f"{FEATURE_DIR}/{repo}_committer_feature.csv"
     cal_committer_feature(repo, start, end, output_path)

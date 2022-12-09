@@ -7,6 +7,7 @@ from AnomalyDetection.Config import *
 from utils.mysql_utils import select_all
 from utils.time_utils import time_reverse, cal_time_delta_minutes
 from utils.pr_self_utils import get_all_pr_number_between
+from utils.math_utils import cal_mean
 
 
 '================= 第一部分 对repo_self表中提取评审信息=================='
@@ -77,10 +78,8 @@ def process_review_comment_list(review_comment_list: List):
             resp_time = group_pr['review_response_time'].iloc[0]
             first_response_time_list.append(resp_time)
             review_num_list.append(group_pr.shape[0])
-        avg_review_response_time, avg_review_num = 0, 0
-        if len(review_num_list) > 0:
-            avg_review_response_time = np.nanmean(first_response_time_list)
-            avg_review_num = np.nanmean(review_num_list)
+        avg_review_response_time = cal_mean(first_response_time_list)
+        avg_review_num = cal_mean(review_num_list)
 
         # 保存结果
         reviewer_feature.append([person, pr_num, review_num, avg_review_num, avg_review_comment_length, avg_review_response_time])
@@ -138,15 +137,15 @@ def cal_reviewer_feature(repo: str, start: datetime, end: datetime, output_path:
     # 5.合并上述所有特征，关联值为reviewer
     df1 = pd.DataFrame(data=review_comment_feature, columns=['reviewer', 'pr_num', 'review_num', 'avg_review_num', 'avg_review_comment_length', 'avg_review_response_time'])
     df2 = pd.DataFrame(data=approve_rate_list, columns=['reviewer', 'approve_rate'])
-    df3 = pd.merge(df1, df2, how='outer', on='reviewer')
+    df3 = pd.merge(df1, df2, how='left', on='reviewer')
 
     # 保存为结果
     df3.to_csv(output_path, index=False, header=True)
 
 
 if __name__ == '__main__':
-    repo = 'tensorflow'
+    repo = 'dubbo'
     start = datetime(2021, 1, 1)
-    end = datetime(2021, 2, 1)
+    end = datetime(2021, 7, 1)
     output_path = f"{FEATURE_DIR}/{repo}_reviewer_feature.csv"
     cal_reviewer_feature(repo, start, end, output_path)

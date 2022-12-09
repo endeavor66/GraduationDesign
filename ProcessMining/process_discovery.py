@@ -1,4 +1,5 @@
 import pm4py
+import os
 import pandas as pd
 from typing import Union
 from pm4py.objects.log.obj import EventLog
@@ -12,7 +13,7 @@ from ProcessMining.Config import *
 '''
 def heuristics_mining(log: Union[EventLog, pd.DataFrame], heuristics_net_filepath: str, petri_net_filename):
     # 恢复heuristics_net
-    heuristics_net = pm4py.discover_heuristics_net(log, dependency_threshold=0.9)
+    heuristics_net = pm4py.discover_heuristics_net(log, dependency_threshold=0.5)
     pm4py.save_vis_heuristics_net(heuristics_net, heuristics_net_filepath)
 
     # 转化为Petri-Net
@@ -51,23 +52,44 @@ def model_evaluation(log: Union[EventLog, pd.DataFrame], petri_net, initial_mark
 '''
 功能：过程发现
 '''
-def process_discovery(repo: str):
-    for t in FILE_TYPES:
-        filename = f"{repo}_{t}"
-        log_path = f"{PROCESS_DATA_DIR}/{filename}.csv"
-        heuristics_net_filepath = f"{HEURISTICS_NET_DIR}/{filename}_heuristics_net.png"
-        petri_net_filename = f"{PETRI_NET_DIR}/{filename}_petri_net"
+def process_discovery_for_single_repo(repo: str, scene: str):
+    filename = f"{repo}_{scene}"
+    log_path = f"{LOG_SINGLE_SCENE_DIR}/{filename}.csv"
+    heuristics_net_filepath = f"{HEURISTICS_NET_DIR}/{filename}_heuristics_net.png"
+    petri_net_filename = f"{PETRI_NET_DIR}/{filename}_petri_net"
 
-        # 加载事件日志
-        log = pd.read_csv(log_path, parse_dates=['time:timestamp'], infer_datetime_format=True)
+    # 加载事件日志
+    log = pd.read_csv(log_path, parse_dates=['time:timestamp'])
 
-        # 过程发现
-        petri_net, im, fm = heuristics_mining(log, heuristics_net_filepath, petri_net_filename)
+    # 过程发现
+    petri_net, im, fm = heuristics_mining(log, heuristics_net_filepath, petri_net_filename)
 
-        # 模型评估
-        model_evaluation(log, petri_net, im, fm)
+    # 模型评估
+    model_evaluation(log, petri_net, im, fm)
+
+
+def process_discovery_for_single_scene(scene: str):
+    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
+
+    log = pd.DataFrame()
+    for repo in repos:
+        input_path = f"{LOG_SINGLE_SCENE_DIR}/{repo}_{scene}.csv"
+        if not os.path.exists(input_path):
+            print(f"{input_path} don't exist")
+            continue
+        df = pd.read_csv(input_path, parse_dates=['time:timestamp'])
+        log = pd.concat([log, df], ignore_index=True)
+
+    # 过程发现
+    heuristics_net_filepath = f"{HEURISTICS_NET_DIR}/{scene}_heuristics_net.png"
+    petri_net_filename = f"{PETRI_NET_DIR}/{scene}_petri_net"
+    petri_net, im, fm = heuristics_mining(log, heuristics_net_filepath, petri_net_filename)
+
+    # 模型评估
+    model_evaluation(log, petri_net, im, fm)
 
 
 if __name__ == "__main__":
     repo = "tensorflow"
-    process_discovery(repo)
+    scene = FILE_TYPES[2]
+    process_discovery_for_single_scene(scene)
