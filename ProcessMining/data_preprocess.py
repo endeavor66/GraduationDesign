@@ -57,11 +57,11 @@ def load_data(filepath: str) -> pd.DataFrame:
                                        activity_key='Activity',
                                        timestamp_key='StartTimestamp')
     # 添加角色列
-    event_log['Role'] = event_log['Activity'].apply(lambda x: cal_role(x))
+    # event_log['Role'] = event_log['Activity'].apply(lambda x: cal_role(x))
     # 删除重复列
     event_log.drop(columns=['CaseID', 'Activity', 'StartTimestamp'], inplace=True)
     # 重新组织列的次序
-    event_log = event_log[['case:concept:name', 'concept:name', 'time:timestamp', 'People', 'Role']]
+    event_log = event_log[['case:concept:name', 'concept:name', 'time:timestamp', 'People']]
     return event_log
 
 
@@ -141,6 +141,6 @@ def valid(repo: str):
 
 if __name__ == '__main__':
     projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix']
-    repo = "phoenix"
+    repo = "zipkin"
     data_preprocess(repo)
     # valid(repo)

@@ -101,7 +101,7 @@ def crawl_commit_between(owner: str, repo: str, start: datetime, end: datetime):
     df = pd.DataFrame(data)
     for index, row in df.iterrows():
         pr_number = row['pr_number']
-        # if pr_number < 20322:
+        # if pr_number <= 8787:
         #     print(f"pr#{pr_number} process done")
         #     continue
         commit_content = row['commit_content']
@@ -114,9 +114,8 @@ def crawl_commit_between(owner: str, repo: str, start: datetime, end: datetime):
 
 if __name__ == '__main__':
     projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix']
-
-    owner = 'opencv'
-    repo = 'opencv'
-    start = datetime(2021, 1, 1)
-    end = datetime(2021, 7, 1)
+    owner = 'phoenixframework'
+    repo = 'phoenix'
+    start = datetime(2021, 7, 1)
+    end = datetime(2022, 1, 1)
     crawl_commit_between(owner, repo, start, end)

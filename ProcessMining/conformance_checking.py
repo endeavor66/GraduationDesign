@@ -144,5 +144,7 @@ def auto_analyse(repo: str):
 
 
 if __name__ == "__main__":
-    repo = 'dubbo'
-    auto_analyse(repo)
+    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
+    for repo in repos:
+        auto_analyse(repo)
+        print(f"{repo} process done")

@@ -73,11 +73,12 @@ def extract_data_from_bigquery_csv(filepath: str, repo: str):
 
 
 if __name__ == '__main__':
-    repo = "zipkin"
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix']
+    repo = "tensorflow"
     from datetime import datetime, timedelta
     import os
-    start = datetime(2021, 1, 1)  # 年，月，日，时，分，秒 其中年，月，日是必须的
-    end = datetime(2021, 7, 1)
+    start = datetime(2021, 7, 1)  # 年，月，日，时，分，秒 其中年，月，日是必须的
+    end = datetime(2022, 1, 1)
     index = 0
     while start < end:
         cur = start.strftime("%Y%m%d")

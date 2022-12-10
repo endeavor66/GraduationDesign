@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from typing import List
 from ProcessMining.Config import *
 
@@ -42,6 +43,9 @@ def cal_unfork_pr_list(repo: str):
     unfork_pr_list = []
     for scene in ['unfork_merge', 'unfork_close']:
         input_path = f"{LOG_SINGLE_SCENE_DIR}/{repo}_{scene}.csv"
+        if not os.path.exists(input_path):
+            print(f"{input_path} don't exist")
+            continue
         df = pd.read_csv(input_path)
         pr_list = df['case:concept:name'].unique()
         unfork_pr_list.extend(pr_list)
@@ -70,5 +74,6 @@ def auto_analysis(repo: str):
 
 
 if __name__ == '__main__':
+    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
     repo = 'dubbo'
     auto_analysis(repo)

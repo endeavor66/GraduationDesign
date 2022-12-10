@@ -13,7 +13,10 @@ from ProcessMining.Config import *
 '''
 def heuristics_mining(log: Union[EventLog, pd.DataFrame], heuristics_net_filepath: str, petri_net_filename):
     # 恢复heuristics_net
-    heuristics_net = pm4py.discover_heuristics_net(log, dependency_threshold=0.5)
+    heuristics_net = pm4py.discover_heuristics_net(log,
+                                                   dependency_threshold=0.5,
+                                                   and_threshold=0.65,
+                                                   loop_two_threshold=0.5)
     pm4py.save_vis_heuristics_net(heuristics_net, heuristics_net_filepath)
 
     # 转化为Petri-Net
@@ -81,6 +84,7 @@ def process_discovery_for_single_scene(scene: str):
         log = pd.concat([log, df], ignore_index=True)
 
     # 过程发现
+    print("log case: %s" % len(log['case:concept:name'].unique()))
     heuristics_net_filepath = f"{HEURISTICS_NET_DIR}/{scene}_heuristics_net.png"
     petri_net_filename = f"{PETRI_NET_DIR}/{scene}_petri_net"
     petri_net, im, fm = heuristics_mining(log, heuristics_net_filepath, petri_net_filename)
@@ -90,6 +94,5 @@ def process_discovery_for_single_scene(scene: str):
 
 
 if __name__ == "__main__":
-    repo = "tensorflow"
-    scene = FILE_TYPES[2]
+    scene = FILE_TYPES[3]
     process_discovery_for_single_scene(scene)

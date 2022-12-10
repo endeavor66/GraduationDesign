@@ -31,5 +31,6 @@ def cal_involved_pr_after_permission_change(repo: str):
 
 
 if __name__ == '__main__':
-    repo = "dubbo"
+    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
+    repo = "phoenix"
     cal_involved_pr_after_permission_change(repo)

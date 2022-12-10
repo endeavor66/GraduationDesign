@@ -144,8 +144,10 @@ def cal_reviewer_feature(repo: str, start: datetime, end: datetime, output_path:
 
 
 if __name__ == '__main__':
-    repo = 'dubbo'
+    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
     start = datetime(2021, 1, 1)
-    end = datetime(2021, 7, 1)
-    output_path = f"{FEATURE_DIR}/{repo}_reviewer_feature.csv"
-    cal_reviewer_feature(repo, start, end, output_path)
+    end = datetime(2022, 1, 1)
+    for repo in repos:
+        output_path = f"{FEATURE_DIR}/{repo}_reviewer_feature.csv"
+        cal_reviewer_feature(repo, start, end, output_path)
+        print(f"{repo} process done")

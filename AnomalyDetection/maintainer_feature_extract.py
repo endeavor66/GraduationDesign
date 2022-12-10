@@ -81,11 +81,13 @@ def cal_maintainer_feature(maintainer_pr_data: List, output_path: str):
 
 
 if __name__ == '__main__':
-    repo = 'dubbo'
+    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
     start = datetime(2021, 1, 1)
-    end = datetime(2021, 7, 1)
-    input_path = f"{LOG_ALL_SCENE_DIR}/{repo}.csv"
-    output_path = f"{FEATURE_DIR}/{repo}_maintainer_feature.csv"
-    maintainer_pr_data = cal_maintainer_pr_data(repo, start, end, input_path)
-    cal_maintainer_feature(maintainer_pr_data, output_path)
+    end = datetime(2022, 1, 1)
+    for repo in repos:
+        input_path = f"{LOG_ALL_SCENE_DIR}/{repo}.csv"
+        output_path = f"{FEATURE_DIR}/{repo}_maintainer_feature.csv"
+        maintainer_pr_data = cal_maintainer_pr_data(repo, start, end, input_path)
+        cal_maintainer_feature(maintainer_pr_data, output_path)
+        print(f"{repo} process done")
 

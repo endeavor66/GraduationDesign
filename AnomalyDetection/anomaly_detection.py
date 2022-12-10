@@ -61,6 +61,9 @@ def anomaly_detection(repo: str, role: str):
 
 
 if __name__ == '__main__':
-    repo = "dubbo"
-    role = "reviewer"
-    anomaly_detection(repo, role)
+    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
+    roles = ["reviewer", "maintainer", "committer"]
+    for repo in repos:
+        for role in roles:
+            anomaly_detection(repo, role)
+            print(f"{repo} {role} process done" )
