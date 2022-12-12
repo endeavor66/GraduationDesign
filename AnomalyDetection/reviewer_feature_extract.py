@@ -51,7 +51,7 @@ def cal_str_length(s: str):
 功能：计算评审意见长度、首次评审响应时间
 '''
 def process_review_comment_list(review_comment_list: List):
-    columns = ['reviewer', 'pr_number', 'review_comment', 'review_comment_created_time', 'pr_created_time']
+    columns = ['people', 'pr_number', 'review_comment', 'review_comment_created_time', 'pr_created_time']
 
     # 借助pandas进行分析，添加两列: 评审意见长度、首次评审响应时间
     df = pd.DataFrame(data=review_comment_list, columns=columns)
@@ -60,7 +60,7 @@ def process_review_comment_list(review_comment_list: List):
 
     # 依次计算每个reviewer的特征
     reviewer_feature = []
-    for person, group in df.groupby('reviewer'):
+    for person, group in df.groupby('people'):
         # 发表评审的总次数
         review_num = group.shape[0]
 
@@ -135,9 +135,9 @@ def cal_reviewer_feature(repo: str, start: datetime, end: datetime, output_path:
     approve_rate_list = cal_review_approve_rate(repo, pr_number_list)
 
     # 5.合并上述所有特征，关联值为reviewer
-    df1 = pd.DataFrame(data=review_comment_feature, columns=['reviewer', 'pr_num', 'review_num', 'avg_review_num', 'avg_review_comment_length', 'avg_review_response_time'])
-    df2 = pd.DataFrame(data=approve_rate_list, columns=['reviewer', 'approve_rate'])
-    df3 = pd.merge(df1, df2, how='left', on='reviewer')
+    df1 = pd.DataFrame(data=review_comment_feature, columns=['people', 'pr_num', 'review_num', 'avg_review_num', 'avg_review_comment_length', 'avg_review_response_time'])
+    df2 = pd.DataFrame(data=approve_rate_list, columns=['people', 'approve_rate'])
+    df3 = pd.merge(df1, df2, how='left', on='people')
 
     # 保存为结果
     df3.to_csv(output_path, index=False, header=True)

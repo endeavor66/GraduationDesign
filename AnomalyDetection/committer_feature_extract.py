@@ -126,7 +126,7 @@ def cal_committer_feature(repo: str, start: datetime, end: datetime, output_path
         committer_feature.append(data)
 
     # 保存为文件
-    columns = ['person', 'commit_num',
+    columns = ['people', 'commit_num',
                'total_line_addition', 'total_line_deletion', 'total_file_edit_num', 'total_file_edit_type',
                'sensitive_line_addition', 'sensitive_line_deletion', 'sensitive_file_edit_num',
                'merge_rate', 'commit_interval']

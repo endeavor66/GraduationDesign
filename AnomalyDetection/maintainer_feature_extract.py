@@ -62,8 +62,8 @@ def cal_maintainer_pr_data(repo: str, start: datetime, end: datetime, input_path
 '''
 def cal_maintainer_feature(maintainer_pr_data: List, output_path: str):
     maintainer_feature = []
-    df = pd.DataFrame(data=maintainer_pr_data, columns=['maintainer', 'pr_number', 'pr_state', 'pr_reviewer_num', 'response_time'])
-    for person, group in df.groupby('maintainer'):
+    df = pd.DataFrame(data=maintainer_pr_data, columns=['people', 'pr_number', 'pr_state', 'pr_reviewer_num', 'response_time'])
+    for person, group in df.groupby('people'):
         # 参与的PR数量
         pr_num = group.shape[0]
 
@@ -76,7 +76,7 @@ def cal_maintainer_feature(maintainer_pr_data: List, output_path: str):
         maintainer_feature.append([person, pr_num, merge_rate, assign_reviewer_num, response_time])
 
     # 保存为文件
-    df_file = pd.DataFrame(data=maintainer_feature, columns=['maintainer', 'pr_num', 'merge_rate', 'assign_reviewer_num', 'response_time'])
+    df_file = pd.DataFrame(data=maintainer_feature, columns=['people', 'pr_num', 'merge_rate', 'assign_reviewer_num', 'response_time'])
     df_file.to_csv(output_path, index=False, header=True)
 
 
