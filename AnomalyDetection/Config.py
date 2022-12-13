@@ -17,6 +17,8 @@ ISOLATION_FOREST_DIR = f"{OUTPUT_DATA_DIR}/isolation_forest"
 ONE_CLASS_SVM_DIR = f"{OUTPUT_DATA_DIR}/one_class_svm"
 LOF_DIR = f"{OUTPUT_DATA_DIR}/lof"
 MULTI_MODEL_VOTE_DIR = f"{OUTPUT_DATA_DIR}/multi_model_vote"
+RANDOM_FOREST_DIR = f"{OUTPUT_DATA_DIR}/random_forest"
+
 
 # 创建不存在的目录
 create_dir_if_not_exist(FEATURE_DIR)
@@ -26,5 +28,6 @@ create_dir_if_not_exist(ISOLATION_FOREST_DIR)
 create_dir_if_not_exist(ONE_CLASS_SVM_DIR)
 create_dir_if_not_exist(LOF_DIR)
 create_dir_if_not_exist(MULTI_MODEL_VOTE_DIR)
+create_dir_if_not_exist(RANDOM_FOREST_DIR)
 
 
