@@ -7,6 +7,8 @@ FILE_TYPES = ["fork_merge", "fork_close", "unfork_merge", "unfork_close"]
 SENSITIVE_FILE_SUFFIX = ["xml", "json", "jar", "ini", "dat", "cnf", "yml", "toml", "gradle", "bin", "config", "exe",
                          "properties", "cmd", "build", "cfg"]
 
+# 异常数据比例
+ANOMALY_PERCENT = 5
 
 # 文件路径
 FEATURE_DIR = "feature"

@@ -138,6 +138,7 @@ def cal_reviewer_feature(repo: str, start: datetime, end: datetime, output_path:
     df1 = pd.DataFrame(data=review_comment_feature, columns=['people', 'pr_num', 'review_num', 'avg_review_num', 'avg_review_comment_length', 'avg_review_response_time'])
     df2 = pd.DataFrame(data=approve_rate_list, columns=['people', 'approve_rate'])
     df3 = pd.merge(df1, df2, how='left', on='people')
+    df3.fillna(0, inplace=True)
 
     # 保存为结果
     df3.to_csv(output_path, index=False, header=True)

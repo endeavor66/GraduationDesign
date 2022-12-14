@@ -92,22 +92,37 @@ def data_preprocess(repo: str):
         log = load_data(input_path)
         print("total case: %d" % len(log['case:concept:name'].unique()))
 
-        # 剔除无效案例
+        # 强制性限制
+        # case的起始活动限制
         log = pm4py.filter_start_activities(log, ["ForkRepository", "CreateBranch", "SubmitCommit", "OpenPR"])
         print("filter_start_activities")
         log_info(log)
 
+        # case的结束活动限制
         log = pm4py.filter_end_activities(log, ["DeleteBranch", "ClosePR", "MergePR"])
         print("filter_end_activities")
         log_info(log)
 
+        # case中必须包含 OpenPR
         log = pm4py.filter_event_attribute_values(log, 'concept:name', ['OpenPR'], level="case", retain=True)
         print("filter_event_attribute_values (OpenPR)")
         log_info(log)
 
+        # case中必须包含 ClosePR/MergePR
         log = pm4py.filter_event_attribute_values(log, 'concept:name', ['ClosePR', 'MergePR'], level="case", retain=True)
         print("filter_event_attribute_values (ClosePR, MergePR)")
         log_info(log)
+
+        # 非强制性限制
+        # case中必须包含 SubmitCommit,Revise
+        # log = pm4py.filter_event_attribute_values(log, 'concept:name', ['SubmitCommit', 'Revise'], level="case", retain=True)
+        # print("filter_event_attribute_values (SubmitCommit,Revise)")
+        # log_info(log)
+
+        # case的长度必须大于2，目的是过滤掉 OpenPR->ClosePR/MergePR的情况
+        # log = pm4py.filter_case_size(log, 3, 100)
+        # print("filter_case_size, must >= 3")
+        # log_info(log)
 
         # 过滤包含低频行为(ReopenPR, PRReviewDismiss)的案例
         log = pm4py.filter_event_attribute_values(log, 'concept:name', ['ReopenPR', 'PRReviewDismiss'], level="case", retain=False)
@@ -140,7 +155,7 @@ def valid(repo: str):
 
 
 if __name__ == '__main__':
-    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix']
-    repo = "zipkin"
-    data_preprocess(repo)
-    # valid(repo)
+    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
+    for repo in repos:
+        data_preprocess(repo)
+        print(f"{repo} process done")

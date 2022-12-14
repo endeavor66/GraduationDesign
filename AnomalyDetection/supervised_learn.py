@@ -1,31 +1,12 @@
+from collections import Counter
+
 import pandas as pd
+from imblearn.over_sampling import SVMSMOTE, SMOTE, RandomOverSampler
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, precision_recall_fscore_support
+from sklearn.metrics import classification_report, accuracy_score
 from AnomalyDetection.Config import *
-
-
-'''
-功能：计算F值
-'''
-def cal_f_measure(precision, recall):
-    if precision == 0 or recall == 0:
-        f1, f2 = 0, 0
-    else:
-        f1 = 2 * precision * recall / (precision + recall)
-        f2 = 5 * precision * recall / (4 * precision + recall)
-        # f05 = 1.25 * precision * recall / (0.25 * precision + recall)
-    return f1, f2
-
-
-'''
-功能：模型评价
-'''
-def model_evaluation(y_true, y_pred, positive_label):
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    precision, recall, f_score, support = precision_recall_fscore_support(y_true, y_pred, pos_label=positive_label, average="binary")
-    f1, f2 = cal_f_measure(precision, recall)
-    return [tn, fp, fn, tp, precision, recall, f1, f2]
+from utils.machine_learn_utils import model_evaluation
 
 
 '''
@@ -40,11 +21,18 @@ def random_forest_classifier(repo: str, role: str):
     df_y = df.iloc[:, -1]
 
     # 数据集划分
-    x_train, x_test, y_train, y_test = train_test_split(df_x, df_y, test_size=0.3, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(df_x, df_y, test_size=0.4, random_state=42)
+
+    # 训练集过采样
+    print('Origin y_train shape %s' % Counter(y_train))
+    print('Origin y_test shape %s' % Counter(y_test))
+    x_train_resample, y_train_resample = RandomOverSampler(sampling_strategy=0.5, random_state=42).fit_sample(x_train, y_train)
+    # x_train_resample, y_train_resample = SVMSMOTE(random_state=42).fit_sample(x_train, y_train)
+    print('Resampled y_train shape %s' % Counter(y_train_resample))
 
     # 训练模型
     clf = RandomForestClassifier()
-    clf.fit(x_train, y_train)
+    clf.fit(x_train_resample, y_train_resample)
 
     # 模型预测
     y_pred = clf.predict(x_test)
@@ -67,8 +55,8 @@ def random_forest_classifier(repo: str, role: str):
 功能：汇总随机森林在所有项目中的性能表现
 '''
 def evaluation_model():
-    repos = ['dubbo', 'opencv', 'netbeans']
-    roles = ["reviewer", "maintainer", "committer"]
+    repos = ['dubbo', 'opencv']
+    roles = ["committer", "reviewer", "maintainer"]
     output_path = f"{RANDOM_FOREST_DIR}/random_forest_evaluation.csv"
     data = []
     for repo in repos:
