@@ -5,6 +5,7 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn import svm
 from sklearn.preprocessing import MinMaxScaler
 from AnomalyDetection.Config import *
+from AnomalyDetection.dagmm2.cal_score import score
 
 
 '''

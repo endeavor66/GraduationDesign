@@ -2,6 +2,9 @@ import pandas as pd
 from AnomalyDetection.Config import *
 
 
+'''
+功能：统计每个项目场景中可疑人员数量和比例
+'''
 def cal_anomaly_people_percent(repo: str, role: str):
     input_path = f"{MULTI_MODEL_VOTE_DIR}/{repo}_{role}_multi_model_vote.csv"
 
