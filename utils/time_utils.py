@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 import pandas as pd
+from utils.math_utils import cal_mean
+from typing import List
 
 # 2021-10-08T01:11:34Z时间转换2021-10-08 01:11:34
 def time_reverse(time_str):
@@ -31,6 +33,18 @@ def cal_time_delta_minutes(start: datetime, end: datetime):
     delta_seconds = (end - start).total_seconds()
     delta_minutes = delta_seconds / 60
     return delta_minutes
+
+
+'''
+功能：计算平均时间间隔
+'''
+def cal_time_interval(date_list: List):
+    date_list.sort()
+    interval = []
+    for i in range(1, len(date_list)):
+        inv = cal_time_delta_minutes(date_list[i - 1], date_list[i])
+        interval.append(inv)
+    return cal_mean(interval)
 
 
 if __name__ == '__main__':

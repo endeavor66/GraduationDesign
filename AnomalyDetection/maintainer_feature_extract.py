@@ -3,7 +3,7 @@ import json
 from typing import List
 from datetime import datetime
 from AnomalyDetection.Config import *
-from utils.time_utils import cal_time_delta_minutes
+from utils.time_utils import cal_time_delta_minutes, cal_time_interval
 from utils.pr_self_utils import get_pr_attributes, get_all_pr_number_between
 
 '''
@@ -39,6 +39,9 @@ def cal_maintainer_pr_data(repo: str, start: datetime, end: datetime, input_path
         activity = maintainer_activity['concept:name'].iloc[0]
         pr_state = cal_pr_state(activity)
 
+        # 计算PR的响应时间(操作PR的具体时间)
+        operate_time = maintainer_activity['time:timestamp'].iloc[0]
+
         # 获取PR属性
         pr_attribute = get_pr_attributes(repo, pr_number)
         pr_open_time = pr_attribute['created_at']
@@ -48,11 +51,11 @@ def cal_maintainer_pr_data(repo: str, start: datetime, end: datetime, input_path
         requested_reviewer_list = json.loads(pr_attribute['requested_reviewers_content'])
         pr_reviewer_num = len(requested_reviewer_list)
 
-        # 计算PR响应时间
+        # 计算PR响应时间(从创建到关闭PR的时间)
         response_time = cal_time_delta_minutes(pr_open_time, pr_close_time)
 
         # 保存结果
-        maintainer_pr_data.append([maintainer, pr_number, pr_state, pr_reviewer_num, response_time])
+        maintainer_pr_data.append([maintainer, pr_number, pr_state, pr_reviewer_num, response_time, operate_time])
 
     return maintainer_pr_data
 
@@ -62,21 +65,26 @@ def cal_maintainer_pr_data(repo: str, start: datetime, end: datetime, input_path
 '''
 def cal_maintainer_feature(maintainer_pr_data: List, output_path: str):
     maintainer_feature = []
-    df = pd.DataFrame(data=maintainer_pr_data, columns=['people', 'pr_number', 'pr_state', 'pr_reviewer_num', 'response_time'])
+    df = pd.DataFrame(data=maintainer_pr_data, columns=['people', 'pr_number', 'pr_state', 'pr_reviewer_num',
+                                                        'response_time', 'operate_time'])
     for person, group in df.groupby('people'):
         # 参与的PR数量
         pr_num = group.shape[0]
 
         # 计算一段时间内各项指标的平均值
         merge_rate = group['pr_state'].sum() / pr_num
-        assign_reviewer_num = group['pr_reviewer_num'].sum() / pr_num
-        response_time = group['response_time'].sum() / pr_num
+        avg_assign_reviewer_num = group['pr_reviewer_num'].sum() / pr_num
+        avg_response_time = group['response_time'].sum() / pr_num
+        avg_response_interval = cal_time_interval(group['operate_time'].tolist())
 
         # 保存结果
-        maintainer_feature.append([person, pr_num, merge_rate, assign_reviewer_num, response_time])
+        maintainer_feature.append([person, pr_num, merge_rate,
+                                   avg_assign_reviewer_num, avg_response_time, avg_response_interval])
 
     # 保存为文件
-    df_file = pd.DataFrame(data=maintainer_feature, columns=['people', 'pr_num', 'merge_rate', 'assign_reviewer_num', 'response_time'])
+    df_file = pd.DataFrame(data=maintainer_feature,
+                           columns=['people', 'pr_num', 'merge_rate',
+                                    'avg_assign_reviewer_num', 'avg_response_time', 'avg_response_interval'])
     df_file.to_csv(output_path, index=False, header=True)
 
 

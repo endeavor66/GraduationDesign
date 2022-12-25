@@ -1,14 +1,14 @@
-import pandas as pd
-import numpy as np
 import json
-from typing import List, Dict
 from datetime import datetime
+from typing import List
+
+import numpy as np
+import pandas as pd
+
 from AnomalyDetection.Config import *
 from utils.mysql_utils import select_all
-from utils.time_utils import cal_time_delta_minutes
 from utils.pr_self_utils import get_pr_attributes, get_all_pr_number_between
-from utils.math_utils import cal_mean
-
+from utils.time_utils import cal_time_interval
 
 '''
 功能：获取pr_number_list包含的所有commit
@@ -20,18 +20,6 @@ def get_commit_of_pr_number(repo: str, pr_number_list: List):
     sql = f"select * from {repo}_commit where pr_number >= {start_pr} and pr_number <= {end_pr}"
     data = select_all(sql)
     return data
-
-
-'''
-功能：计算平均时间间隔
-'''
-def cal_commit_interval(commit_date: List):
-    commit_date.sort()
-    interval = []
-    for i in range(1, len(commit_date)):
-        inv = cal_time_delta_minutes(commit_date[i - 1], commit_date[i])
-        interval.append(inv)
-    return cal_mean(interval)
 
 
 '''
@@ -116,7 +104,7 @@ def cal_committer_feature(repo: str, start: datetime, end: datetime, output_path
 
         # 计算一段时间内，committer提交commit的频率(平均时间间隔)
         commit_date = group['committer_date'].tolist()
-        commit_interval = cal_commit_interval(commit_date)
+        commit_interval = cal_time_interval(commit_date)
 
         # 保存所有特征
         data = [person, commit_num,
