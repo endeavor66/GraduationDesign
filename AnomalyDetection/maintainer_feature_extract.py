@@ -89,13 +89,18 @@ def cal_maintainer_feature(maintainer_pr_data: List, output_path: str):
 
 
 if __name__ == '__main__':
-    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
     start = datetime(2021, 1, 1)
-    end = datetime(2022, 1, 1)
-    for repo in repos:
+    end = datetime(2022, 7, 1)
+    for pro in projects:
+        repo = pro.split('/')[1]
         input_path = f"{LOG_ALL_SCENE_DIR}/{repo}.csv"
         output_path = f"{FEATURE_DIR}/{repo}_maintainer_feature.csv"
         maintainer_pr_data = cal_maintainer_pr_data(repo, start, end, input_path)
         cal_maintainer_feature(maintainer_pr_data, output_path)
-        print(f"{repo} process done")
+        print(f"repo#{repo} process done")
 

@@ -16,7 +16,7 @@ from utils.math_utils import cal_mean
 '''
 def cal_review_comment_list(repo: str, start: datetime, end: datetime):
     # 从repo_self表中查询特定时间段的PR信息
-    table = f"{repo}_self"
+    table = f"{repo.replace('-', '_')}_self"
     sql = f"select * from `{table}` where created_at >= '{start}' and created_at < '{end}'"
     data = select_all(sql)
 
@@ -29,7 +29,7 @@ def cal_review_comment_list(repo: str, start: datetime, end: datetime):
         review_comments_content = row['review_comments_content']
         # 提取所有评审意见
         for review in json.loads(review_comments_content):
-            reviewer = review['user']['login']
+            reviewer = review['user']['login'] if not pd.isna(review['user']) else None
             review_comment = review['body']
             review_comment_created_time = time_reverse(review['created_at'])
             # 保存结果
@@ -125,6 +125,10 @@ def cal_reviewer_feature(repo: str, start: datetime, end: datetime, output_path:
     # 1.从repo_self表中提取所有评审相关的信息
     review_comment_list = cal_review_comment_list(repo, start, end)
 
+    if len(review_comment_list) == 0:
+        print(f"{repo} review comment is empty, can't calculate reviewer feature")
+        return
+
     # 2.计算每个评审者的评审意见长度，评审响应时间
     review_comment_feature = process_review_comment_list(review_comment_list)
 
@@ -145,10 +149,18 @@ def cal_reviewer_feature(repo: str, start: datetime, end: datetime, output_path:
 
 
 if __name__ == '__main__':
-    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
+    projects = [#'openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware',
+                #'apache/zookeeper',
+                #'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                #'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick',
+                #'apache/hadoop',
+                #'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm'
+        ]
     start = datetime(2021, 1, 1)
-    end = datetime(2022, 1, 1)
-    for repo in repos:
+    end = datetime(2022, 7, 1)
+    for pro in projects:
+        repo = pro.split('/')[1]
         output_path = f"{FEATURE_DIR}/{repo}_reviewer_feature.csv"
         cal_reviewer_feature(repo, start, end, output_path)
-        print(f"{repo} process done")
+        print(f"repo#{repo} process done")

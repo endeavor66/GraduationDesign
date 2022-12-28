@@ -1,5 +1,6 @@
 import pandas as pd
 from AnomalyDetection.Config import *
+import os
 
 
 '''
@@ -17,6 +18,11 @@ def cal_vote(label1: int, label2: int, label3: int):
 功能：根据多个模型的识别结果，采取投票法来打标签
 '''
 def multi_model_vote(repo: str, role: str):
+    feature_path = f"{FEATURE_DIR}/{repo}_{role}_feature.csv"
+    if not os.path.exists(feature_path):
+        print(f"{feature_path} don't exist")
+        return
+
     # 读取文件
     input_path1 = f"{ISOLATION_FOREST_DIR}/{repo}_{role}_isolation_forest.csv"
     input_path2 = f"{ONE_CLASS_SVM_DIR}/{repo}_{role}_one_class_svm.csv"
@@ -47,9 +53,14 @@ def multi_model_vote(repo: str, role: str):
 
 
 if __name__ == '__main__':
-    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
     roles = ["reviewer", "maintainer", "committer"]
-    for repo in repos:
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
+    for pro in projects:
+        repo = pro.split('/')[1]
         for role in roles:
             multi_model_vote(repo, role)
             print(f"{repo} {role} process done")

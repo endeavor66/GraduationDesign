@@ -17,7 +17,8 @@ def get_commit_of_pr_number(repo: str, pr_number_list: List):
     pr_number_list.sort()
     start_pr = pr_number_list[0]
     end_pr = pr_number_list[-1]
-    sql = f"select * from {repo}_commit where pr_number >= {start_pr} and pr_number <= {end_pr}"
+    table = f"{repo.replace('-', '_')}_commit"
+    sql = f"select * from {table} where pr_number >= {start_pr} and pr_number <= {end_pr}"
     data = select_all(sql)
     return data
 
@@ -123,10 +124,15 @@ def cal_committer_feature(repo: str, start: datetime, end: datetime, output_path
 
 
 if __name__ == '__main__':
-    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
     start = datetime(2021, 1, 1)
-    end = datetime(2022, 1, 1)
-    for repo in repos:
+    end = datetime(2022, 7, 1)
+    for pro in projects:
+        repo = pro.split('/')[1]
         output_path = f"{FEATURE_DIR}/{repo}_committer_feature.csv"
         cal_committer_feature(repo, start, end, output_path)
-        print(f"{repo} process done")
+        print(f"repo#{repo} process done")

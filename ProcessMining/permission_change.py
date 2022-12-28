@@ -74,6 +74,12 @@ def auto_analysis(repo: str):
 
 
 if __name__ == '__main__':
-    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
-    repo = 'dubbo'
-    auto_analysis(repo)
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
+    for pro in projects:
+        repo = pro.split('/')[1]
+        auto_analysis(repo)
+        print(f"repo#{repo} process done")

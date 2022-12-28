@@ -5,16 +5,8 @@ from typing import List, Dict
 from datetime import datetime, timedelta
 from utils.mysql_utils import select_all, select_one
 from utils.time_utils import time_reverse
-from utils.pr_self_utils import get_all_pr_number_between
+from utils.pr_self_utils import get_all_pr_number_between, get_pr_attributes
 from DataAcquire.Config import *
-
-'''
-功能：获取特定PR(pr_number)的创建和关闭时间(created_at, closed_at)
-'''
-def get_pr_attributes(repo: str, pr_number: int) -> Dict:
-    sql = f"select * from `{repo}_self` where repo_name='{repo}' and pr_number={pr_number}"
-    data = select_one(sql)
-    return data
 
 
 '''
@@ -29,7 +21,8 @@ def get_pr_attributes(repo: str, pr_number: int) -> Dict:
 def get_create_branch_event(repo: str, repo_full_name: str, branch: str, pr_open_time: datetime) -> Dict:
     # 发现很多异常数据: create_event 仅在 pr_open_time 之后不到一分钟内发生，因此将 create_event 的创建时间修改提前三分钟，人工消除误差
     search_time = pr_open_time + timedelta(minutes=3)
-    sql = f"select * from `{repo}_events` where repo_name='{repo_full_name}' and type='CreateEvent' and payload_ref='{branch}' and created_at < '{search_time}' ORDER BY created_at DESC LIMIT 1"
+    table = f"{repo.replace('-', '_')}_events"
+    sql = f"select * from `{table}` where repo_name='{repo_full_name}' and type='CreateEvent' and payload_ref='{branch}' and created_at < '{search_time}' ORDER BY created_at DESC LIMIT 1"
     data = select_one(sql)
     if (not pd.isna(data)) and data['created_at'] > pr_open_time:
         data['created_at'] = pr_open_time - timedelta(seconds=10)
@@ -46,7 +39,8 @@ def get_create_branch_event(repo: str, repo_full_name: str, branch: str, pr_open
     搜索到的事件，如果没找到则返回None
 '''
 def get_delete_branch_event(repo: str, repo_full_name: str, branch: str, pr_close_time: datetime) -> Dict:
-    sql = f"select * from `{repo}_events` where repo_name='{repo_full_name}' and type='DeleteEvent' and payload_ref='{branch}' and created_at > '{pr_close_time}' ORDER BY created_at ASC LIMIT 1"
+    table = f"{repo.replace('-', '_')}_events"
+    sql = f"select * from `{table}` where repo_name='{repo_full_name}' and type='DeleteEvent' and payload_ref='{branch}' and created_at > '{pr_close_time}' ORDER BY created_at ASC LIMIT 1"
     data = select_one(sql)
     return data
 
@@ -81,7 +75,8 @@ def get_fork_event(owner: str, repo: str, pr_attributes: Dict) -> Dict:
     # 如果是fork仓，则搜索ForkEvent
     fork_event = None
     if (not pd.isna(head_repo_fork)) and head_repo_fork and (not pd.isna(head_repo_full_name)):
-        sql = f"select * from `{repo}_events` where repo_name='{owner}/{repo}' and type='ForkEvent' and payload_forkee_full_name='{head_repo_full_name}' and created_at < '{pr_open_time}' ORDER BY created_at DESC LIMIT 1"
+        table = f"{repo.replace('-', '_')}_events"
+        sql = f"select * from `{table}` where repo_name='{owner}/{repo}' and type='ForkEvent' and payload_forkee_full_name='{head_repo_full_name}' and created_at < '{pr_open_time}' ORDER BY created_at DESC LIMIT 1"
         fork_event = select_one(sql)
     return fork_event
 
@@ -119,7 +114,8 @@ def get_push_event(repo: str, pr_attributes: dict) -> List:
     if pd.isna(head_repo_full_name) or pd.isna(head_ref):
         return []
     # 根据上述条件查询PushEvent
-    sql = f"""select * from `{repo}_events` 
+    table = f"{repo.replace('-', '_')}_events"
+    sql = f"""select * from `{table}` 
                 where repo_name='{head_repo_full_name}' 
                 and type='PushEvent' 
                 and (payload_ref='{head_ref}' or payload_ref='refs/heads/{head_ref}'
@@ -133,7 +129,8 @@ def get_push_event(repo: str, pr_attributes: dict) -> List:
 功能：从events表中提取特定PR(pr_number)的相关事件
 '''
 def get_pr_events(owner: str, repo: str, pr_number: int) -> List:
-    sql = f"select * from `{repo}_events` where repo_name='{owner}/{repo}' and payload_pr_number={pr_number} and (type='PullRequestEvent' OR type='PullRequestReviewEvent' OR type='PullRequestReviewCommentEvent')"
+    table = f"{repo.replace('-', '_')}_events"
+    sql = f"select * from `{table}` where repo_name='{owner}/{repo}' and payload_pr_number={pr_number} and (type='PullRequestEvent' OR type='PullRequestReviewEvent' OR type='PullRequestReviewCommentEvent')"
     data = select_all(sql)
     return data
 
@@ -258,16 +255,21 @@ def auto_process(owner: str, repo: str, pr_number: int):
 
 
 if __name__ == '__main__':
-    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix']
-    owner = "tensorflow"
-    repo = "tensorflow"
-    start = datetime(2021, 7, 1)
-    end = datetime(2022, 1, 1)
-    pr_number_list = get_all_pr_number_between(repo, start, end)
-    total = len(pr_number_list)
-    index = 1
-    for pr_number in pr_number_list:
-        auto_process(owner, repo, pr_number)
-        print(f"{index}/{total}")
-        index += 1
-    # auto_process(repo, 50323)
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
+    for pro in projects:
+        owner = pro.split('/')[0]
+        repo = pro.split('/')[1]
+        start = datetime(2021, 1, 1)
+        end = datetime(2022, 7, 1)
+        pr_number_list = get_all_pr_number_between(repo, start, end)
+        total = len(pr_number_list)
+        index = 1
+        for pr_number in pr_number_list:
+            auto_process(owner, repo, pr_number)
+            print(f"{index}/{total}")
+            index += 1
+        print(f"repo#{repo} process done")

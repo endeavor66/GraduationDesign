@@ -1,5 +1,6 @@
 import pandas as pd
 from AnomalyDetection.Config import *
+import os
 
 
 '''
@@ -7,6 +8,10 @@ from AnomalyDetection.Config import *
 '''
 def cal_anomaly_people_percent(repo: str, role: str):
     input_path = f"{MULTI_MODEL_VOTE_DIR}/{repo}_{role}_multi_model_vote.csv"
+
+    if not os.path.exists(input_path):
+        print(f"{input_path} don't exist")
+        return []
 
     df = pd.read_csv(input_path)
     df_anomaly = df.loc[df['vote'] == -1]
@@ -21,12 +26,19 @@ def cal_anomaly_people_percent(repo: str, role: str):
 
 
 if __name__ == '__main__':
-    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
     roles = ["reviewer", "maintainer", "committer"]
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
     result = []
-    for repo in repos:
+    for pro in projects:
+        repo = pro.split('/')[1]
         for role in roles:
             r = cal_anomaly_people_percent(repo, role)
+            if len(r) == 0:
+                continue
             result.append(r)
             print(f"{repo} {role} process done")
 

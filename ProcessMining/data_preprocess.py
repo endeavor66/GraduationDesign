@@ -125,9 +125,9 @@ def data_preprocess(repo: str):
         # log_info(log)
 
         # 过滤包含低频行为(ReopenPR, PRReviewDismiss)的案例
-        log = pm4py.filter_event_attribute_values(log, 'concept:name', ['ReopenPR', 'PRReviewDismiss'], level="case", retain=False)
-        print("filter_event_attribute_values (ReopenPR, PRReviewDismiss)")
-        log_info(log)
+        # log = pm4py.filter_event_attribute_values(log, 'concept:name', ['ReopenPR', 'PRReviewDismiss'], level="case", retain=False)
+        # print("filter_event_attribute_values (ReopenPR, PRReviewDismiss)")
+        # log_info(log)
 
         # 保存文件
         log.to_csv(output_path, header=True, index=False)
@@ -143,19 +143,39 @@ def data_preprocess(repo: str):
 功能：验证爬取处理后的event log是否有问题（CreateBranch是否会在OpenPR之后发生）
 '''
 def valid(repo: str):
-    t = FILE_TYPES[0]
-    filename = f"{repo}_{t}.csv"
-    input_path = f"{EVENT_LOG_DIR}/{filename}"
-    df = pd.read_csv(input_path, parse_dates=['StartTimestamp'])
-    for name, group in df.groupby('CaseID'):
-        create_event = group.loc[group['Activity'] == 'CreateBranch']
-        openPR_event = group.loc[group['Activity'] == 'OpenPR']
-        if create_event.shape[0] > 0 and openPR_event.shape[0] > 0 and create_event['StartTimestamp'].iloc[0] > openPR_event['StartTimestamp'].iloc[0]:
-            print(f"pr_number#{name} 异常, CreateBranch: {create_event.iloc[0, 3]}, openPR: {openPR_event.iloc[0, 3]}")
+    input_path = f"{LOG_ALL_SCENE_DIR}/{repo}.csv"
+    df = pd.read_csv(input_path, parse_dates=['time:timestamp'])
+    for name, group in df.groupby('case:concept:name'):
+        create_event = group.loc[group['concept:name'] == 'CreateBranch']
+        delete_event = group.loc[group['concept:name'] == 'DeleteBranch']
+        openPR_event = group.loc[group['concept:name'] == 'OpenPR']
+
+        create_number = create_event.shape[0]
+        delete_number = delete_event.shape[0]
+        openPR_number = openPR_event.shape[0]
+
+        create_time = create_event['time:timestamp'].iloc[0] if create_number > 0 else None
+        delete_time = delete_event['time:timestamp'].iloc[0] if delete_number > 0 else None
+        openPR_time = openPR_event['time:timestamp'].iloc[0] if openPR_number > 0 else None
+
+        if create_number > 1:
+            print(f"pr_number#{name} 异常, CreateBranch number: {create_number}")
+        if delete_number > 1:
+            print(f"pr_number#{name} 异常, DeleteBranch number: {delete_number}")
+
+        if (not pd.isna(create_time)) and (not pd.isna(openPR_time)) and create_time > openPR_time:
+            print(f"pr_number#{name} 异常, CreateBranchTime: {create_time}, openPR: {openPR_time}")
+        if (not pd.isna(create_time)) and (not pd.isna(delete_time)) and create_time > delete_time:
+            print(f"pr_number#{name} 异常, CreateBranchTime: {create_time}, DeleteBranchTime: {delete_time}")
 
 
 if __name__ == '__main__':
-    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
-    for repo in repos:
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
+    for pro in projects:
+        repo = pro.split('/')[1]
         data_preprocess(repo)
-        print(f"{repo} process done")
+        print(f"repo#{repo} process done")

@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from AnomalyDetection.Config import *
+import os
 
 
 '''
@@ -9,6 +10,10 @@ from AnomalyDetection.Config import *
 def boxplot(repo: str, role: str):
     input_path = f"{FEATURE_DIR}/{repo}_{role}_feature.csv"
     output_path = f"{BOX_PLOT_DIR}/{repo}_{role}_box_plot.csv"
+
+    if not os.path.exists(input_path):
+        print(f"{input_path} don't exist")
+        return
 
     df = pd.read_csv(input_path)
     columns = df.columns.values.tolist()
@@ -29,9 +34,14 @@ def boxplot(repo: str, role: str):
 
 
 if __name__ == '__main__':
-    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
     roles = ["reviewer", "maintainer", "committer"]
-    for repo in repos:
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
+    for pro in projects:
+        repo = pro.split('/')[1]
         for role in roles:
             boxplot(repo, role)
             print(f"{repo} {role} process done")

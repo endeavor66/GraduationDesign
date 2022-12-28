@@ -68,7 +68,7 @@ def crawl_commit(owner: str, repo: str, pr_number: int, commit_sha_list: List):
                 file_edit_num,
                 file_content
             ]
-            result = insert_into_commit(repo.replace('-', '_'), commit_data)
+            result = insert_into_commit(repo, commit_data)
             print(f"commit_sha: %s, insert %s" % (sha, result > 0))
         else:
             print(f"commit_sha: %s, request url failed, status code: %s" % (sha, response.status_code))
@@ -94,7 +94,6 @@ def extract_commit_sha(commit_content: str):
 def crawl_commit_between(owner: str, repo: str, start: datetime, end: datetime):
     # 从repo_self表中查询特定时间段的PR信息
     table = f"{repo.replace('-', '_')}_self"
-    print(table)
     sql = f"select pr_number, created_at, closed_at, commit_number, commit_content from `{table}` where created_at >= '{start}' and created_at < '{end}'"
     data = select_all(sql)
 
@@ -102,9 +101,9 @@ def crawl_commit_between(owner: str, repo: str, start: datetime, end: datetime):
     df = pd.DataFrame(data)
     for index, row in df.iterrows():
         pr_number = row['pr_number']
-        if pr_number <= 10652:
-            print(f"pr#{pr_number} process done")
-            continue
+        # if pr_number <= 693:
+        #     print(f"pr#{pr_number} process done")
+        #     continue
         commit_content = row['commit_content']
         # 提取当前PR包含的commit集合
         commit_sha_list = extract_commit_sha(commit_content)
@@ -114,17 +113,17 @@ def crawl_commit_between(owner: str, repo: str, start: datetime, end: datetime):
 
 
 if __name__ == '__main__':
-    # projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix']
-    projects = ['ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
                 'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
-                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'ARM-software/arm-trusted-firmware',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
                 'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
 
-    # for pro in ['redis/redis', 'stefanberger/swtpm']:
-    owner = 'redis'
-    repo = 'redis'
-    start = datetime(2022, 1, 1)
-    end = datetime(2022, 7, 1)
-    print(f"{repo}/{owner} begin")
-    crawl_commit_between(owner, repo, start, end)
-    print(f"{repo}/{owner} process done")
+    for pro in ['apache/dubbo']:
+        owner = pro.split('/')[0]
+        repo = pro.split('/')[1]
+        start = datetime(2022, 7, 1)
+        end = datetime(2022, 7, 2)
+        print(f"project#{repo}/{owner} begin")
+        crawl_commit_between(owner, repo, start, end)
+        print(f"project#{repo}/{owner} process done")

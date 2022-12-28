@@ -9,11 +9,15 @@ from utils.mysql_utils import batch_insert_into_events
 def join_commits_sha(commits: str) -> str:
     if commits is None:
         return None
-    commits_dic_list = json.loads(commits)
-    commit_sha = []
-    for commit in commits_dic_list:
-        commit_sha.append(commit['sha'])
-    return "#".join(commit_sha)
+    try:
+        commits_dic_list = json.loads(commits)
+        commit_sha = []
+        for commit in commits_dic_list:
+            commit_sha.append(commit['sha'])
+        return "#".join(commit_sha)
+    except Exception as e:
+        print(e)
+        return ""
 
 
 '''
@@ -26,7 +30,6 @@ def check(v):
     if isinstance(v, str) and v[0] == "\"" and v[-1] == "\"":
         v = v[1:-1]
     return v
-
 
 
 '''
@@ -44,7 +47,7 @@ def extract_data_from_bigquery_csv(filepath: str, repo: str):
         t = (check(event['id']),
              check(event['type']),
              check(event['public']),
-             check(event['created_at']),
+             check(event['created_at']),  # 由于操作失误，2021年的数据该字段为 create_at, 2022年的数据该字段为 created_at
              check(event['actor_id']),
              check(event['actor_login']),
              check(event['repo_id']),
@@ -73,22 +76,28 @@ def extract_data_from_bigquery_csv(filepath: str, repo: str):
 
 
 if __name__ == '__main__':
-    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix']
-    repo = "tensorflow"
-    from datetime import datetime, timedelta
-    import os
-    start = datetime(2021, 7, 1)  # 年，月，日，时，分，秒 其中年，月，日是必须的
-    end = datetime(2022, 1, 1)
-    index = 0
-    while start < end:
-        cur = start.strftime("%Y%m%d")
-        filepath = f"bigquery_data/{cur}.csv"
-        if not os.path.exists(filepath):
-            print(f"{filepath} does not exist")
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
+
+    for pro in projects:
+        repo = pro.split('/')[1]
+        from datetime import datetime, timedelta
+        import os
+        start = datetime(2022, 1, 1)  # 年，月，日，时，分，秒 其中年，月，日是必须的
+        end = datetime(2022, 7, 1)
+        index = 0
+        while start < end:
+            cur = start.strftime("%Y%m%d")
+            filepath = f"bigquery_data/{cur}.csv"
+            if not os.path.exists(filepath):
+                print(f"{filepath} does not exist")
+                start = start + timedelta(days=1)
+                continue
+            extract_data_from_bigquery_csv(filepath, repo)
+            print(f"{filepath} process done")
             start = start + timedelta(days=1)
-            continue
-        extract_data_from_bigquery_csv(filepath, repo)
-        print(f"{filepath} process done")
-        start = start + timedelta(days=1)
-        index += 1
-    print(f"共处理{index}份文件")
+            index += 1
+        print(f"repo#{repo} process done, 共处理{index}份文件")

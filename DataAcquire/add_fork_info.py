@@ -16,13 +16,14 @@ headers = {'Authorization': 'token ' + access_token}
 
 # 查询特定仓库中(repo_self)所有pr_number
 def get_all_pr(repo: str):
-    sql = f"select pr_number from `{repo}_self`"
+    table = f"{repo.replace('-', '_')}_self"
+    sql = f"select pr_number from `{table}`"
     data = select_all(sql)
     return data
 
 
 def data_update(owner:str, repo: str, exception_filename: str):
-    table = f"{repo}_self"
+    table = f"{repo.replace('-', '_')}_self"
     cursor = conn.cursor()
     pr_number_list = get_all_pr(repo)
     for pr in pr_number_list:

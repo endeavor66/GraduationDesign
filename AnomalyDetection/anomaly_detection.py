@@ -6,6 +6,7 @@ from sklearn import svm
 from sklearn.preprocessing import MinMaxScaler
 from AnomalyDetection.Config import *
 from AnomalyDetection.dagmm2.cal_score import score
+import os
 
 
 '''
@@ -101,6 +102,10 @@ def lof(input_path: str, output_path: str):
 def anomaly_detection(repo: str, role: str):
     input_path = f"{FEATURE_DIR}/{repo}_{role}_feature.csv"
 
+    if not os.path.exists(input_path):
+        print(f"{input_path} don't exist!")
+        return
+
     # 高维度检测异常值：孤立森林
     output_path = f"{ISOLATION_FOREST_DIR}/{repo}_{role}_isolation_forest.csv"
     isolation_forest(input_path, output_path)
@@ -115,9 +120,14 @@ def anomaly_detection(repo: str, role: str):
 
 
 if __name__ == '__main__':
-    repos = ['zipkin', 'netbeans', 'opencv', 'dubbo', 'phoenix']
     roles = ["reviewer", "maintainer", "committer"]
-    for repo in repos:
+    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
+    for pro in projects:
+        repo = pro.split('/')[1]
         for role in roles:
             anomaly_detection(repo, role)
             print(f"{repo} {role} process done")
