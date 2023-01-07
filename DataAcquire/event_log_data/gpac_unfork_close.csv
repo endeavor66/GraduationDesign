@@ -1,0 +1,16 @@
+CaseID,StartTimestamp,Activity,People
+1760,2021-04-26 14:51:25,CreateBranch,rbouqueau
+1760,2021-05-07 09:51:49,DeleteBranch,jeanlf
+1760,2021-04-26 15:18:23,SubmitCommit,rbouqueau
+1760,2021-04-26 20:02:23,SubmitCommit,rbouqueau
+1760,2021-04-26 15:17:30,OpenPR,rbouqueau
+1760,2021-04-26 16:49:28,PRReviewReject,jeanlf
+1760,2021-04-26 16:49:19,PRReviewComment,jeanlf
+1760,2021-04-26 16:49:28,PRReviewReject,jeanlf
+1760,2021-04-26 20:04:03,PRReviewComment,rbouqueau
+1760,2021-04-26 20:04:03,PRReviewComment,rbouqueau
+1760,2021-04-26 21:42:47,ClosePR,jeanlf
+1927,2021-10-03 19:19:18,CreateBranch,RodolpheFouquet
+1927,2021-10-03 19:21:57,SubmitCommit,RodolpheFouquet
+1927,2021-10-03 19:20:33,OpenPR,RodolpheFouquet
+1927,2021-10-04 12:10:36,ClosePR,jeanlf

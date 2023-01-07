@@ -1,0 +1,6 @@
+CaseID,StartTimestamp,Activity,People
+293,2022-02-04 10:03:28,CreateBranch,asfgit
+293,2022-02-04 12:27:23,SubmitCommit,asfgit
+293,2022-02-04 12:33:46,SubmitCommit,asfgit
+293,2022-02-04 12:35:21,OpenPR,icing
+293,2022-03-07 15:22:36,ClosePR,ylavic

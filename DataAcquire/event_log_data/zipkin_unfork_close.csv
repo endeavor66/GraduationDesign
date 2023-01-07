@@ -1,0 +1,5 @@
+CaseID,StartTimestamp,Activity,People
+3404,2021-12-14 13:33:09,CreateBranch,jcchavezs
+3404,2021-12-14 14:03:01,DeleteBranch,jcchavezs
+3404,2021-12-14 13:34:19,OpenPR,jcchavezs
+3404,2021-12-14 14:02:56,ClosePR,jcchavezs

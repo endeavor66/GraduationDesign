@@ -1,0 +1,16 @@
+CaseID,StartTimestamp,Activity,People
+20101,2021-05-14 06:09:52,SubmitCommit,opencv-pushbot
+20101,2021-05-17 06:44:33,OpenPR,yo1990
+20101,2021-05-17 06:44:59,ClosePR,yo1990
+20262,2021-06-11 15:24:00,CreateBranch,vrabaud
+20262,2021-06-11 20:01:27,DeleteBranch,alalek
+20262,2021-06-11 15:26:20,OpenPR,vrabaud
+20262,2021-06-11 19:58:25,ClosePR,alalek
+20707,2021-09-12 11:11:04,SubmitCommit,opencv-pushbot
+20707,2021-09-14 08:59:43,SubmitCommit,opencv-pushbot
+20707,2021-09-14 17:18:12,SubmitCommit,opencv-pushbot
+20707,2021-09-14 17:49:56,SubmitCommit,alalek
+20707,2021-09-16 03:27:47,OpenPR,shashinma
+20707,2021-09-16 04:10:34,ClosePR,alalek
+20786,2021-10-01 05:10:32,OpenPR,P4-Pankaj
+20786,2021-10-01 06:04:17,ClosePR,asmorkalov

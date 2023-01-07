@@ -1,0 +1,8 @@
+CaseID,StartTimestamp,Activity,People
+440,2021-03-02 22:26:25,CreateBranch,hartwork
+440,2021-03-02 23:02:40,DeleteBranch,hartwork
+440,2021-03-02 22:38:41,SubmitCommit,hartwork
+440,2021-03-02 22:39:15,OpenPR,hartwork
+440,2021-03-02 22:59:40,ClosePR,hartwork
+565,2022-02-19 19:07:11,CreateBranch,hartwork
+565,2022-02-19 19:07:55,OpenPR,hartwork

@@ -1,0 +1,25 @@
+CaseID,StartTimestamp,Activity,People
+535,2021-09-18 14:26:56,SubmitCommit,stefanberger
+535,2021-09-18 14:27:20,OpenPR,stefanberger
+535,2021-09-18 18:52:29,ClosePR,stefanberger
+562,2021-09-27 12:29:48,CreateBranch,stefanberger
+562,2021-10-11 22:20:02,DeleteBranch,stefanberger
+562,2021-09-27 12:45:26,OpenPR,stefanberger
+562,2021-09-27 16:59:28,ClosePR,stefanberger
+594,2021-10-15 03:38:35,CreateBranch,stefanberger
+594,2021-10-17 22:28:01,DeleteBranch,stefanberger
+594,2021-10-15 04:50:32,SubmitCommit,stefanberger
+599,2021-10-18 01:40:36,CreateBranch,stefanberger
+626,2021-11-05 12:24:21,CreateBranch,stefanberger
+626,2021-11-05 16:59:45,DeleteBranch,stefanberger
+626,2021-11-05 12:24:31,OpenPR,stefanberger
+626,2021-11-05 12:49:10,ClosePR,stefanberger
+648,2022-02-16 16:43:02,SubmitCommit,stefanberger
+648,2022-02-16 17:42:19,OpenPR,stefanberger
+648,2022-02-16 17:44:01,ClosePR,stefanberger
+656,2022-02-17 00:09:30,CreateBranch,stefanberger
+656,2022-02-17 01:12:24,SubmitCommit,stefanberger
+656,2022-02-17 00:09:47,OpenPR,stefanberger
+656,2022-02-18 01:29:48,ClosePR,stefanberger
+693,2022-04-20 15:09:23,CreateBranch,stefanberger
+693,2022-04-29 21:06:52,ClosePR,stefanberger
