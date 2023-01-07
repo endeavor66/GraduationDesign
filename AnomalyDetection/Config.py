@@ -13,6 +13,8 @@ ANOMALY_PERCENT = 5
 # 文件路径
 FEATURE_DIR = "feature"
 LOG_ALL_SCENE_DIR = "../ProcessMining/process_data/log_all_scene"
+ROLE_CHANGE_DIR = "../ProcessMining/process_data/role_change"
+ALIGNMENT_DIR = "../ProcessMining/output_data/alignment"
 OUTPUT_DATA_DIR = "output_data"
 BOX_PLOT_DIR = f"{OUTPUT_DATA_DIR}/box_plot"
 ISOLATION_FOREST_DIR = f"{OUTPUT_DATA_DIR}/isolation_forest"
@@ -20,6 +22,7 @@ ONE_CLASS_SVM_DIR = f"{OUTPUT_DATA_DIR}/one_class_svm"
 LOF_DIR = f"{OUTPUT_DATA_DIR}/lof"
 MULTI_MODEL_VOTE_DIR = f"{OUTPUT_DATA_DIR}/multi_model_vote"
 RANDOM_FOREST_DIR = f"{OUTPUT_DATA_DIR}/random_forest"
+ANOMALY_ANALYSIS_DIR = f"{OUTPUT_DATA_DIR}/anomaly_analysis"
 
 
 # 创建不存在的目录
@@ -31,5 +34,6 @@ create_dir_if_not_exist(ONE_CLASS_SVM_DIR)
 create_dir_if_not_exist(LOF_DIR)
 create_dir_if_not_exist(MULTI_MODEL_VOTE_DIR)
 create_dir_if_not_exist(RANDOM_FOREST_DIR)
+create_dir_if_not_exist(ANOMALY_ANALYSIS_DIR)
 
 

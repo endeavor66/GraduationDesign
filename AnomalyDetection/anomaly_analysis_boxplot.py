@@ -29,8 +29,9 @@ def boxplot(repo: str, role: str):
 
     # 保存各个属性的上下四分位数、中位数、平均值
     statistics_T = np.array(statistics).transpose()
-    df_file = pd.DataFrame(data=statistics_T, index=['25%', '50%', '75%', 'mean'], columns=columns[1:])
-    df_file.to_csv(output_path, index=True, header=True)
+    df_file = pd.DataFrame(data=statistics_T, columns=columns[1:])
+    df_file.insert(0, 'scene', ['25%', '50%', '75%', 'mean'])
+    df_file.to_csv(output_path, index=False, header=True)
 
 
 if __name__ == '__main__':

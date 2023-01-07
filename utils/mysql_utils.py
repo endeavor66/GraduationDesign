@@ -43,6 +43,21 @@ COMMIT_TABLE_FIELDS = [
     "line_deletion",
     "file_edit_num",
     "file_content"]
+PROCESS_EVENT_TABLE_FIELDS = [
+    "repo",
+    "pr_number",
+    "activity",
+    "created_at",
+    "people",
+    "scene"
+]
+PERMISSION_CHANGE_TABLE_FIELDS = [
+    "repo",
+    "people",
+    "pr_number",
+    "change_time",
+    "permission"
+]
 
 # 获取数据库连接对象
 username, password = get_mysql_root_psw()
@@ -60,6 +75,64 @@ def batch_insert_into_events(repo: str, data: List):
     fields = ",".join(EVENT_TABLE_FIELDS)
     fields_param = ("%s," * len(EVENT_TABLE_FIELDS))[0:-1]
     sql = f"insert into `{table}` ({fields}) values({fields_param})"
+    # print("执行SQL: " + sql)
+
+    cursor = conn.cursor()
+    try:
+        conn.ping(reconnect=True)
+        result = cursor.executemany(sql, data)
+        conn.commit()
+        cursor.close()
+        # 如果在一次程序运行过程中多次调用该函数，可能会出问题，conn.close()关闭后后续可能无法获取连接
+        # conn.close()
+        print("操作成功，插入%d条数据" % result)
+    except Exception as e:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        print("数据库执行出错:" + str(e))
+        write_file(exception=str(e), filename=repo + "_exception.csv")
+
+
+"""
+功能：批量插入到process_events表中
+"""
+def batch_insert_into_process_events(repo: str, data: List):
+    if len(data) == 0:
+        print("数据为空，不需要插入到数据库")
+        return
+    fields = ",".join(PROCESS_EVENT_TABLE_FIELDS)
+    fields_param = ("%s," * len(PROCESS_EVENT_TABLE_FIELDS))[0:-1]
+    sql = f"insert into process_events ({fields}) values({fields_param})"
+    # print("执行SQL: " + sql)
+
+    cursor = conn.cursor()
+    try:
+        conn.ping(reconnect=True)
+        result = cursor.executemany(sql, data)
+        conn.commit()
+        cursor.close()
+        # 如果在一次程序运行过程中多次调用该函数，可能会出问题，conn.close()关闭后后续可能无法获取连接
+        # conn.close()
+        print("操作成功，插入%d条数据" % result)
+    except Exception as e:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        print("数据库执行出错:" + str(e))
+        write_file(exception=str(e), filename=repo + "_exception.csv")
+
+
+"""
+功能：批量插入到permission_change表中
+"""
+def batch_insert_into_permission_change(repo: str, data: List):
+    if len(data) == 0:
+        print("数据为空，不需要插入到数据库")
+        return
+    fields = ",".join(PERMISSION_CHANGE_TABLE_FIELDS)
+    fields_param = ("%s," * len(PERMISSION_CHANGE_TABLE_FIELDS))[0:-1]
+    sql = f"insert into permission_change ({fields}) values({fields_param})"
     # print("执行SQL: " + sql)
 
     cursor = conn.cursor()

@@ -20,7 +20,10 @@ OUTPUT_DATA_DIR = "output_data"
 PROCESS_MODEL_DIR = f"{OUTPUT_DATA_DIR}/process_model"
 HEURISTICS_NET_DIR = f"{PROCESS_MODEL_DIR}/heuristics_net"
 PETRI_NET_DIR = f"{PROCESS_MODEL_DIR}/petri_net"
+BPMN_DIR = f"{PROCESS_MODEL_DIR}/bpmn"
+PROCESS_TREE_DIR = f"{PROCESS_MODEL_DIR}/process_model"
 ALIGNMENT_DIR = f"{OUTPUT_DATA_DIR}/alignment"
+TBR_DIR = f"{OUTPUT_DATA_DIR}/tbr"
 
 # 创建不存在的目录
 create_dir_if_not_exist(PROCESS_DATA_DIR)
@@ -31,6 +34,9 @@ create_dir_if_not_exist(OUTPUT_DATA_DIR)
 create_dir_if_not_exist(PROCESS_DATA_DIR)
 create_dir_if_not_exist(HEURISTICS_NET_DIR)
 create_dir_if_not_exist(PETRI_NET_DIR)
+create_dir_if_not_exist(BPMN_DIR)
+create_dir_if_not_exist(PROCESS_TREE_DIR)
 create_dir_if_not_exist(ALIGNMENT_DIR)
+create_dir_if_not_exist(TBR_DIR)
 
 

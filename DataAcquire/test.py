@@ -60,50 +60,73 @@ def query_SaveSheet_TsUid(SQL, SheetTitle, FilePath):
 
     print(FilePath + "  has been downloaded")
 
-if __name__ == '__main__':
+
+def test():
     SQL = """
-		select
-          id,
-          type,
-          public,
-          created_at,
-          actor.id as actor_id,
-          actor.login as actor_login,
-          repo.id as repo_id,
-          repo.name as repo_name,
-          JSON_EXTRACT (payload, '$.ref') as payload_ref,
-          JSON_EXTRACT (payload, '$.ref_type')  as payload_ref_type,
-          JSON_EXTRACT (payload, '$.pusher_type')  as payload_pusher_type,
-          JSON_EXTRACT (payload, '$.push_id')  as payload_push_id,
-          JSON_EXTRACT (payload, '$.size')  as payload_size,
-          JSON_EXTRACT (payload, '$.distinct_size')  as payload_distinct_size,
-          JSON_EXTRACT (payload, '$.commits')  as payload_commits,
-          JSON_EXTRACT (payload, '$.action')  as payload_action,
-          JSON_EXTRACT (payload, '$.pull_request.number')  as payload_pr_number,
-          JSON_EXTRACT (payload, '$.forkee.full_name')  as payload_forkee_full_name,
-          JSON_EXTRACT (payload, '$.changes')  as payload_changes,
-          JSON_EXTRACT (payload, '$.review.state')  as payload_review_state,
-          JSON_EXTRACT (payload, '$.review.author_association')  as payload_review_author_association,
-          JSON_EXTRACT (payload, '$.member.id')  as payload_member_id,
-          JSON_EXTRACT (payload, '$.member.login')  as payload_member_login,
-          JSON_EXTRACT (payload, '$.member.type')  as payload_member_type,
-          JSON_EXTRACT (payload, '$.member.site_admin')  as payload_member_site_admin  
-        FROM  `githubarchive.day.20150102` 
-        where repo.name like '%/tensorflow' or repo.name like '%/opencv' or repo.name like '%/cocos2d-x' 
-         or repo.name like '%/dubbo' or repo.name like '%/zipkin' or repo.name like '%/incubator-heron' 
-         or repo.name like '%/netbeans' or repo.name like '%/moby' or repo.name like '%/terraform' 
-         or repo.name like '%/kuma' or repo.name like '%/scikit-learn' or repo.name like '%/ipython' 
-         or repo.name like '%/helix' or repo.name like '%/react' or repo.name like '%/yii2'  
-         or repo.name like '%/katello' or repo.name like '%/phoenix' 
-         or repo.name like '%/hadoop' or repo.name like '%/zookeeper' or repo.name like '%/spring-framework' 
-         or repo.name like '%/spring-cloud-function' or repo.name like '%/vim' or repo.name like '%/gpac' 
-         or repo.name like '%/ImageMagick' or repo.name like '%/arm-trusted-firmware' or repo.name like '%/libexpat' 
-         or repo.name like '%/httpd' or repo.name like '%/zlib' or repo.name like '%/redis' 
-         or repo.name like '%/swtpm' 
-		"""
+    		select
+              id,
+              type,
+              public,
+              created_at,
+              actor.id as actor_id,
+              actor.login as actor_login,
+              repo.id as repo_id,
+              repo.name as repo_name,
+              JSON_EXTRACT (payload, '$.ref') as payload_ref,
+              JSON_EXTRACT (payload, '$.ref_type')  as payload_ref_type,
+              JSON_EXTRACT (payload, '$.pusher_type')  as payload_pusher_type,
+              JSON_EXTRACT (payload, '$.push_id')  as payload_push_id,
+              JSON_EXTRACT (payload, '$.size')  as payload_size,
+              JSON_EXTRACT (payload, '$.distinct_size')  as payload_distinct_size,
+              JSON_EXTRACT (payload, '$.commits')  as payload_commits,
+              JSON_EXTRACT (payload, '$.action')  as payload_action,
+              JSON_EXTRACT (payload, '$.pull_request.number')  as payload_pr_number,
+              JSON_EXTRACT (payload, '$.forkee.full_name')  as payload_forkee_full_name,
+              JSON_EXTRACT (payload, '$.changes')  as payload_changes,
+              JSON_EXTRACT (payload, '$.review.state')  as payload_review_state,
+              JSON_EXTRACT (payload, '$.review.author_association')  as payload_review_author_association,
+              JSON_EXTRACT (payload, '$.member.id')  as payload_member_id,
+              JSON_EXTRACT (payload, '$.member.login')  as payload_member_login,
+              JSON_EXTRACT (payload, '$.member.type')  as payload_member_type,
+              JSON_EXTRACT (payload, '$.member.site_admin')  as payload_member_site_admin  
+            FROM  `githubarchive.day.20150102` 
+            where repo.name like '%/tensorflow' or repo.name like '%/opencv' or repo.name like '%/cocos2d-x' 
+             or repo.name like '%/dubbo' or repo.name like '%/zipkin' or repo.name like '%/incubator-heron' 
+             or repo.name like '%/netbeans' or repo.name like '%/moby' or repo.name like '%/terraform' 
+             or repo.name like '%/kuma' or repo.name like '%/scikit-learn' or repo.name like '%/ipython' 
+             or repo.name like '%/helix' or repo.name like '%/react' or repo.name like '%/yii2'  
+             or repo.name like '%/katello' or repo.name like '%/phoenix' 
+             or repo.name like '%/hadoop' or repo.name like '%/zookeeper' or repo.name like '%/spring-framework' 
+             or repo.name like '%/spring-cloud-function' or repo.name like '%/vim' or repo.name like '%/gpac' 
+             or repo.name like '%/ImageMagick' or repo.name like '%/arm-trusted-firmware' or repo.name like '%/libexpat' 
+             or repo.name like '%/httpd' or repo.name like '%/zlib' or repo.name like '%/redis' 
+             or repo.name like '%/swtpm' 
+    		"""
     # 直接查询
     res = query_Collect(SQL)
     print(res)
     print(res[0][0])
-    # 将查询保存为Excel
-    # query_SaveSheet_TsUid(SQL, SheetTitle="Online", FilePath=".\Online.xlsx")
+
+
+def modify(filepath):
+    import pandas as pd
+    df = pd.read_csv(filepath)
+    df.rename(columns={"create_at": "created_at"}, inplace=True)
+    df.to_csv(filepath, index=False, header=True, encoding="utf-8-sig")
+
+
+if __name__ == '__main__':
+    from datetime import datetime,timedelta
+    import os
+    start = datetime(2021, 1, 1)
+    end = datetime(2022, 1, 1)
+    while start < end:
+        cur = start.strftime("%Y%m%d")
+        filepath = f"bigquery_data/{cur}.csv"
+        if not os.path.exists(filepath):
+            print(f"{filepath} does not exist")
+            start = start + timedelta(days=1)
+            continue
+        modify(filepath)
+        print(f"{filepath} process done")
+        start = start + timedelta(days=1)

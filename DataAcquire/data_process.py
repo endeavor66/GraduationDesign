@@ -231,7 +231,7 @@ def get_filepath(repo: str, pr_state: bool, is_fork: bool) -> str:
 '''
 功能：全流程自动化
 '''
-def auto_process(owner: str, repo: str, pr_number: int):
+def auto_process_for_single_pr(owner: str, repo: str, pr_number: int):
     # 1.获取PR所有属性
     pr_attributes = get_pr_attributes(repo, pr_number)
     if pr_attributes is None:
@@ -254,12 +254,14 @@ def auto_process(owner: str, repo: str, pr_number: int):
     print(f"PR#{pr_number} process done")
 
 
-if __name__ == '__main__':
-    projects = ['openzipkin/zipkin', 'apache/netbeans', 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
-                'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
-                'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
-                'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
-                'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm']
+def auto_process():
+    projects = ['openzipkin/zipkin', 'apache/netbeans',
+                # 'opencv/opencv', 'apache/dubbo', 'phoenixframework/phoenix',
+                # 'ARM-software/arm-trusted-firmware', 'apache/zookeeper',
+                # 'spring-projects/spring-framework', 'spring-cloud/spring-cloud-function',
+                # 'vim/vim', 'gpac/gpac', 'ImageMagick/ImageMagick', 'apache/hadoop',
+                # 'libexpat/libexpat', 'apache/httpd', 'madler/zlib', 'redis/redis', 'stefanberger/swtpm'
+                ]
     for pro in projects:
         owner = pro.split('/')[0]
         repo = pro.split('/')[1]
@@ -269,7 +271,24 @@ if __name__ == '__main__':
         total = len(pr_number_list)
         index = 1
         for pr_number in pr_number_list:
-            auto_process(owner, repo, pr_number)
+            auto_process_for_single_pr(owner, repo, pr_number)
             print(f"{index}/{total}")
             index += 1
         print(f"repo#{repo} process done")
+
+
+if __name__ == '__main__':
+    import sys
+
+    params = []
+    for i in range(1, len(sys.argv)):
+        params.append((sys.argv[i]))
+
+    # 解析参数
+    projects = params[0].split('#')
+    start = datetime.strptime(params[1], "%Y-%m-%d")
+    end = datetime.strptime(params[2], "%Y-%m-%d")
+
+    print(projects)
+    print(start)
+    print(end)
